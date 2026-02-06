@@ -16,7 +16,12 @@ namespace wisun {
 class correlate_sync_word_bb_impl : public correlate_sync_word_bb
 {
 private:
-    // Nothing to declare in this block.
+    uint16_t d_sfd;
+
+    int d_preamble_bit_counter;
+    uint8_t d_preamble_last_bit;
+    uint16_t d_sfd_data;
+    uint16_t d_phr_data;
 
 public:
     correlate_sync_word_bb_impl(uint16_t sfd);

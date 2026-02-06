@@ -15,9 +15,16 @@ namespace gr {
 namespace wisun {
 
 /*!
- * \brief <+description of block+>
+ * \brief Block to detect SFD bit pattern in demodulated bit stream.
  * \ingroup wisun
  *
+ * This block is responsible for detecting the start-of-frame delimiter (SFD) within the
+ * stream of bits from the demodulated signal. It also extracts the frame length from the
+ * packet header (PHR) and adds tag "wisun-packet" containing the frame length to the
+ * first bit of the SFD.
+ *
+ * This block also adds some other tags with extracted information; this is mainly meant
+ * for debugging.
  */
 class WISUN_API correlate_sync_word_bb : virtual public gr::sync_block
 {
@@ -26,6 +33,7 @@ public:
 
     /*!
      * \brief Return a shared_ptr to a new instance of wisun::correlate_sync_word_bb.
+     * \param sfd start-of-frame delimiter (2-byte word) to look for
      *
      * To avoid accidental use of raw pointers, wisun::correlate_sync_word_bb's
      * constructor is in a private implementation
