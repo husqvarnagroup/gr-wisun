@@ -1,0 +1,24 @@
+# EditorConfig – see https://editorconfig.org/
+
+# top-most EditorConfig file
+root = true
+
+# general settings
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+
+# C++ files
+[*.{cc,h}]
+indent_style = space
+indent_size = 4
+max_line_length = 90
+trim_trailing_whitespace = true
+
+# python files
+[*.py]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+trim_trailing_whitespace = true
