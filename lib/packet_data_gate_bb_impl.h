@@ -16,7 +16,13 @@ namespace wisun {
 class packet_data_gate_bb_impl : public packet_data_gate_bb
 {
 private:
-    // Nothing to declare in this block.
+    std::string d_length_tag;
+    int d_remaining_samples;
+    bool d_packet_rssi_tag_done;
+    bool d_packet_rssi_first_tag_discarded;
+    bool d_packet_rssi_threshold_warning_done;
+    int d_current_packet_absolute_offset;
+    double d_packet_rssi;
 
 public:
     packet_data_gate_bb_impl(const std::string length_tag);

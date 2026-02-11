@@ -15,9 +15,12 @@ namespace gr {
 namespace wisun {
 
 /*!
- * \brief <+description of block+>
+ * \brief This block only passes bits belonging to a Wi-SUN packet.
  * \ingroup wisun
  *
+ * This block removes any bits not belonging to a packet from the data stream.
+ *
+ * In addition, this block makes sure there is an RSSI tag on the packet ("packet-rssi").
  */
 class WISUN_API packet_data_gate_bb : virtual public gr::block
 {
@@ -26,6 +29,7 @@ public:
 
     /*!
      * \brief Return a shared_ptr to a new instance of wisun::packet_data_gate_bb.
+     * \param length_tag Name of tag containing packet length
      *
      * To avoid accidental use of raw pointers, wisun::packet_data_gate_bb's
      * constructor is in a private implementation
