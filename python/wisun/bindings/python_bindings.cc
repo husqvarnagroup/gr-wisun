@@ -23,6 +23,7 @@ namespace py = pybind11;
 // BINDING_FUNCTION_PROTOTYPES(
     void bind_correlate_sync_word_bb(py::module& m);
     void bind_packet_data_gate_bb(py::module& m);
+    void bind_data_whitening_bb(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -53,5 +54,6 @@ PYBIND11_MODULE(wisun_python, m)
     // BINDING_FUNCTION_CALLS(
     bind_correlate_sync_word_bb(m);
     bind_packet_data_gate_bb(m);
+    bind_data_whitening_bb(m);
     // ) END BINDING_FUNCTION_CALLS
 }

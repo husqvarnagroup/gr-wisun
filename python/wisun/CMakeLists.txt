@@ -36,3 +36,4 @@ add_custom_target(
             ${PROJECT_BINARY_DIR}/test_modules/gnuradio/wisun/)
 GR_ADD_TEST(qa_correlate_sync_word_bb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_correlate_sync_word_bb.py)
 GR_ADD_TEST(qa_packet_data_gate_bb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_packet_data_gate_bb.py)
+GR_ADD_TEST(qa_data_whitening_bb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_data_whitening_bb.py)
