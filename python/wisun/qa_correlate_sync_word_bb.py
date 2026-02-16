@@ -89,7 +89,7 @@ class qa_correlate_sync_word_bb(gr_unittest.TestCase):
         self.assertEqual(result_data[0:32], [0] * 32)
         self.assertEqual(result_data[32:], src_data[:-32])
         # check tags
-        self.assertEqual(len(dst.tags()), 9)
+        self.assertEqual(len(dst.tags()), 10)
         tags = dst.tags()
         tag_keys = set([str(tag.key) for tag in tags])
         assert tag_keys == set(("wisun-packet",
@@ -98,6 +98,7 @@ class qa_correlate_sync_word_bb(gr_unittest.TestCase):
                                 "wisun-packet-phr",
                                 "wisun-packet-phr-mode-switch",
                                 "wisun-packet-phr-fcs-type",
+                                "wisun-packet-phr-data-whitening",
                                 "wisun-packet-phr-frame-length",
                                 "wisun-packet-payload",
                                 "wisun-packet-end"))

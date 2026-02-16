@@ -76,6 +76,8 @@ int correlate_sync_word_bb_impl::work(int noutput_items,
             uint8_t phr_mode_switch = d_phr_data >> 15;
             /* PHR bit 3: FCS type */
             uint8_t phr_fcs_type = (d_phr_data & 0x1000) >> 12;
+            /* PHR bit 4: data_whitening */
+            uint8_t phr_data_whitening = (d_phr_data & 0x0800) >> 11;
             /* PHR bits 5-15: frame length */
             uint16_t phr_frame_length = d_phr_data & 0x07ff;
 
@@ -124,6 +126,10 @@ int correlate_sync_word_bb_impl::work(int noutput_items,
                                     this->nitems_written(0) + i + 1 + 16 + 3,
                                     pmt::string_to_symbol("wisun-packet-phr-fcs-type"),
                                     pmt::from_long(phr_fcs_type));
+            gr::block::add_item_tag(0,
+                                    this->nitems_written(0) + i + 1 + 16 + 4,
+                                    pmt::string_to_symbol("wisun-packet-phr-data-whitening"),
+                                    pmt::from_long(phr_data_whitening));
             gr::block::add_item_tag(0,
                                     this->nitems_written(0) + i + 1 + 16 + 5,
                                     pmt::string_to_symbol("wisun-packet-phr-frame-length"),
