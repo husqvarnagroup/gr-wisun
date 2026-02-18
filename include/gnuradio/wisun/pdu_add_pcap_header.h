@@ -15,7 +15,7 @@ namespace gr {
 namespace wisun {
 
 /*!
- * \brief <+description of block+>
+ * \brief This block adds a PCAP header to each received PDU.
  * \ingroup wisun
  *
  */
@@ -26,6 +26,8 @@ public:
 
     /*!
      * \brief Return a shared_ptr to a new instance of wisun::pdu_add_pcap_header.
+     * \param prepend_global_pcap_header Whether to add an initial PDU with the global
+     * PCAP header.
      *
      * To avoid accidental use of raw pointers, wisun::pdu_add_pcap_header's
      * constructor is in a private implementation

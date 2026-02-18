@@ -16,19 +16,14 @@ namespace wisun {
 class pdu_add_pcap_header_impl : public pdu_add_pcap_header
 {
 private:
-    // Nothing to declare in this block.
+    bool d_prepend_global_pcap_header;
+    bool d_global_pcap_header_done;
 
 public:
     pdu_add_pcap_header_impl(const bool prepend_global_pcap_header);
     ~pdu_add_pcap_header_impl();
 
-    // Where all the action really happens
-    void forecast(int noutput_items, gr_vector_int& ninput_items_required);
-
-    int general_work(int noutput_items,
-                     gr_vector_int& ninput_items,
-                     gr_vector_const_void_star& input_items,
-                     gr_vector_void_star& output_items);
+    void handle_msg(pmt::pmt_t msg);
 };
 
 } // namespace wisun
