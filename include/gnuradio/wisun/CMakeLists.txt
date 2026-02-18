@@ -12,4 +12,5 @@
 install(FILES api.h
     correlate_sync_word_bb.h
     packet_data_gate_bb.h
-    data_whitening_bb.h DESTINATION include/gnuradio/wisun)
+    data_whitening_bb.h
+    pdu_add_pcap_header.h DESTINATION include/gnuradio/wisun)

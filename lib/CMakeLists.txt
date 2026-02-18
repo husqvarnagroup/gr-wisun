@@ -14,7 +14,8 @@ include(GrPlatform) #define LIB_SUFFIX
 list(APPEND wisun_sources
     correlate_sync_word_bb_impl.cc
     packet_data_gate_bb_impl.cc
-    data_whitening_bb_impl.cc)
+    data_whitening_bb_impl.cc
+    pdu_add_pcap_header_impl.cc)
 
 set(wisun_sources
     "${wisun_sources}"
