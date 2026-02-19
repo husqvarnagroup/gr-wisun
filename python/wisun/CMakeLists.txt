@@ -38,3 +38,4 @@ GR_ADD_TEST(qa_correlate_sync_word_bb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURC
 GR_ADD_TEST(qa_packet_data_gate_bb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_packet_data_gate_bb.py)
 GR_ADD_TEST(qa_data_whitening_bb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_data_whitening_bb.py)
 GR_ADD_TEST(qa_pdu_add_pcap_header ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_pdu_add_pcap_header.py)
+GR_ADD_TEST(qa_rssi_tag_cc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_rssi_tag_cc.py)

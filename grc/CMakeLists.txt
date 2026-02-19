@@ -10,4 +10,5 @@ install(FILES
     wisun_correlate_sync_word_bb.block.yml
     wisun_packet_data_gate_bb.block.yml
     wisun_data_whitening_bb.block.yml
-    wisun_pdu_add_pcap_header.block.yml DESTINATION share/gnuradio/grc/blocks)
+    wisun_pdu_add_pcap_header.block.yml
+    wisun_rssi_tag_cc.block.yml DESTINATION share/gnuradio/grc/blocks)
