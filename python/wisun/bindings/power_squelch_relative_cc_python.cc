@@ -13,8 +13,8 @@
 /* If manual edits are made, the following tags should be modified accordingly.    */
 /* BINDTOOL_GEN_AUTOMATIC(1)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
-/* BINDTOOL_HEADER_FILE(power_squelch_relative_cc.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(d84bf3c75b870f14d0078f86f1d25bab)                     */
+/* BINDTOOL_HEADER_FILE(power_squelch_relative_cc.h) */
+/* BINDTOOL_HEADER_FILE_HASH(9de37e6bd4d7f47ff2a72f37a1725201)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -30,30 +30,21 @@ namespace py = pybind11;
 void bind_power_squelch_relative_cc(py::module& m)
 {
 
-    using power_squelch_relative_cc    = gr::wisun::power_squelch_relative_cc;
+    using power_squelch_relative_cc = gr::wisun::power_squelch_relative_cc;
 
 
-    py::class_<power_squelch_relative_cc, gr::sync_block, gr::block, gr::basic_block,
-        std::shared_ptr<power_squelch_relative_cc>>(m, "power_squelch_relative_cc", D(power_squelch_relative_cc))
+    py::class_<power_squelch_relative_cc,
+               gr::sync_block,
+               gr::block,
+               gr::basic_block,
+               std::shared_ptr<power_squelch_relative_cc>>(
+        m, "power_squelch_relative_cc", D(power_squelch_relative_cc))
 
         .def(py::init(&power_squelch_relative_cc::make),
-           D(power_squelch_relative_cc,make)
-        )
-        
-
+             py::arg("relative_threshold"),
+             py::arg("alpha") = 1.0E-4,
+             D(power_squelch_relative_cc, make))
 
 
         ;
-
-
-
-
 }
-
-
-
-
-
-
-
-

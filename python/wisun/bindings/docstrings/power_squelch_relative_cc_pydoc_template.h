@@ -15,13 +15,11 @@
  */
 
 
-
- static const char *__doc_gr_wisun_power_squelch_relative_cc = R"doc()doc";
-
-
- static const char *__doc_gr_wisun_power_squelch_relative_cc_power_squelch_relative_cc_0 = R"doc()doc";
+static const char* __doc_gr_wisun_power_squelch_relative_cc = R"doc()doc";
 
 
- static const char *__doc_gr_wisun_power_squelch_relative_cc_make = R"doc()doc";
+static const char* __doc_gr_wisun_power_squelch_relative_cc_power_squelch_relative_cc_0 =
+    R"doc()doc";
 
-  
+
+static const char* __doc_gr_wisun_power_squelch_relative_cc_make = R"doc()doc";
