@@ -17,7 +17,8 @@ list(APPEND wisun_sources
     data_whitening_bb_impl.cc
     pdu_add_pcap_header_impl.cc
     rssi_tag_cc_impl.cc
-    power_squelch_relative_cc_impl.cc)
+    power_squelch_relative_cc_impl.cc
+    tag_based_dc_correction_ff_impl.cc)
 
 set(wisun_sources
     "${wisun_sources}"

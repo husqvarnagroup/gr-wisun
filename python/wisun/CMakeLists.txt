@@ -40,3 +40,4 @@ GR_ADD_TEST(qa_data_whitening_bb ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR
 GR_ADD_TEST(qa_pdu_add_pcap_header ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_pdu_add_pcap_header.py)
 GR_ADD_TEST(qa_rssi_tag_cc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_rssi_tag_cc.py)
 GR_ADD_TEST(qa_power_squelch_relative_cc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_power_squelch_relative_cc.py)
+GR_ADD_TEST(qa_tag_based_dc_correction_ff ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_tag_based_dc_correction_ff.py)

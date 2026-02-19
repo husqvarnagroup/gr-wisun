@@ -27,6 +27,7 @@ namespace py = pybind11;
     void bind_pdu_add_pcap_header(py::module& m);
     void bind_rssi_tag_cc(py::module& m);
     void bind_power_squelch_relative_cc(py::module& m);
+    void bind_tag_based_dc_correction_ff(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -61,5 +62,6 @@ PYBIND11_MODULE(wisun_python, m)
     bind_pdu_add_pcap_header(m);
     bind_rssi_tag_cc(m);
     bind_power_squelch_relative_cc(m);
+    bind_tag_based_dc_correction_ff(m);
     // ) END BINDING_FUNCTION_CALLS
 }
