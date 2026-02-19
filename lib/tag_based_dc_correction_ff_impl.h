@@ -16,7 +16,17 @@ namespace wisun {
 class tag_based_dc_correction_ff_impl : public tag_based_dc_correction_ff
 {
 private:
-    // Nothing to declare in this block.
+    enum state {
+        state_no_signal = 0,
+        state_estimating = 1,
+        state_correcting = 2,
+    };
+    enum state d_state;
+    double d_offset;
+    std::string d_signal_start_tag;
+    std::string d_signal_end_tag;
+    int d_estimation_length;
+    int d_estimation_sample_count;
 
 public:
     tag_based_dc_correction_ff_impl(const std::string signal_start_tag,

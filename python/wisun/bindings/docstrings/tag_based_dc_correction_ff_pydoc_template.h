@@ -15,13 +15,11 @@
  */
 
 
-
- static const char *__doc_gr_wisun_tag_based_dc_correction_ff = R"doc()doc";
-
-
- static const char *__doc_gr_wisun_tag_based_dc_correction_ff_tag_based_dc_correction_ff_0 = R"doc()doc";
+static const char* __doc_gr_wisun_tag_based_dc_correction_ff = R"doc()doc";
 
 
- static const char *__doc_gr_wisun_tag_based_dc_correction_ff_make = R"doc()doc";
+static const char*
+    __doc_gr_wisun_tag_based_dc_correction_ff_tag_based_dc_correction_ff_0 = R"doc()doc";
 
-  
+
+static const char* __doc_gr_wisun_tag_based_dc_correction_ff_make = R"doc()doc";
