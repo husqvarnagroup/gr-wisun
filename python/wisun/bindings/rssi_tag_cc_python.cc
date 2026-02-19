@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(1)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(rssi_tag_cc.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(69a05740fec155172a04fd875df2c03d)                     */
+/* BINDTOOL_HEADER_FILE_HASH(df0d682f5085b903c92c64fc44555618)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -39,7 +39,7 @@ void bind_rssi_tag_cc(py::module& m)
         .def(py::init(&rssi_tag_cc::make),
            D(rssi_tag_cc,make)
         )
-        
+
 
 
 
@@ -49,11 +49,3 @@ void bind_rssi_tag_cc(py::module& m)
 
 
 }
-
-
-
-
-
-
-
-

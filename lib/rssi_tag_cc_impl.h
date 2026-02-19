@@ -16,7 +16,9 @@ namespace wisun {
 class rssi_tag_cc_impl : public rssi_tag_cc
 {
 private:
-    // Nothing to declare in this block.
+    const uint32_t d_n_samples;
+    uint32_t d_sample_index;
+    double d_rssi;
 
 public:
     rssi_tag_cc_impl(const uint32_t n_samples);

@@ -15,7 +15,8 @@ namespace gr {
 namespace wisun {
 
 /*!
- * \brief <+description of block+>
+ * \brief Block to add evenly spaced tags with values for current (i.e. last n samples)
+ * RSSI.
  * \ingroup wisun
  *
  */
@@ -26,6 +27,7 @@ public:
 
     /*!
      * \brief Return a shared_ptr to a new instance of wisun::rssi_tag_cc.
+     * \param n_samples Number of samples to use for one RSSI value tag
      *
      * To avoid accidental use of raw pointers, wisun::rssi_tag_cc's
      * constructor is in a private implementation
