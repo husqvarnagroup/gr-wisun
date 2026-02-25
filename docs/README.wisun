@@ -1,11 +1,10 @@
-This is the wisun-write-a-block package meant as a guide to building
-out-of-tree packages. To use the wisun blocks, the Python namespaces
-is in 'wisun', which is imported as:
+This out-of-tree module for GNU Radio provides basic blocks to support
+Wi-SUN (more specifically the SUN FSK PHY specified in section 19 of
+IEEE 802.15.4-2020).
 
-    import wisun
+At the moment, this is mostly a proof-of-concept and only FSK
+modulation is supported.
 
-See the Doxygen documentation for details about the blocks available
-in this package. A quick listing of the details can be found in Python
-after importing by using:
-
-    help(wisun)
+See `examples/basic_sniffer.grc` for a GNU Radio Companion flow graph
+that receives packets on a single channel and writes the packet data
+to a FIFO, which can be read with Wireshark.
