@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 GARDENA GmbH
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 id: wisun_pdu_add_pcap_header
 label: Add PCAP header
 category: '[Wi-SUN]'

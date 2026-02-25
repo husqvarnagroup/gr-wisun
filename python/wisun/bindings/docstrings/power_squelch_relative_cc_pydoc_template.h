@@ -1,5 +1,6 @@
 /*
- * Copyright 2026 Free Software Foundation, Inc.
+ * SPDX-FileCopyrightText: Copyright 2026 Free Software Foundation, Inc.
+ * SPDX-FileCopyrightText: 2026 GARDENA GmbH
  *
  * This file is part of GNU Radio
  *

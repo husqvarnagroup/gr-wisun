@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 GARDENA GmbH
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 id: wisun_tag_based_dc_correction_ff
 label: tag_based_dc_correction_ff
 category: '[Wi-SUN]'

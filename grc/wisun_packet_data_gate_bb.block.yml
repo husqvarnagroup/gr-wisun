@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 GARDENA GmbH
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 id: wisun_packet_data_gate_bb
 label: packet_data_gate_bb
 category: '[Wi-SUN]'
