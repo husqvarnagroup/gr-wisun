@@ -1,20 +1,24 @@
-title: The WISUN OOT Module
+title: Wi-SUN OOT Module
 version: 1.0
-brief: Short description of gr-wisun
+brief: Out-of-tree module with Wi-SUN support blocks for GNU Radio.
 tags: # Tags are arbitrary, but look at CGRAN what other authors are using
   - sdr
+  - wisun
+  - wireshark
 author:
-  - Author Name <authors@email.address>
+  - Andreas Müller <andreas.mueller@husqvarnagroup.com>
 copyright_owner:
-  - Copyright Owner 1
+  - GARDENA GmbH
 license:
+  - GPL-3.0-or-later
 gr_supported_version:
-  - 3.X
+  - 3.10
 repo: # Put the URL of the repository here
 website: # If you have a separate project website, put it here
 #icon: # Put a URL to a square image here that will be used as an icon
 description: |-
-  A longer, multi-line description of gr-wisun.
-  You may use some *basic* Markdown here.
-  If left empty, it will try to find a README file instead.
+  This OOT module implements basic blocks that allow receiving Wi-SUN
+  packets, which can be fed into Wireshark. This allows using SDR
+  hardware as a Wi-SUN sniffer. At the moment, only 2-FSK modulation
+  is supported.
 file_format: 1
