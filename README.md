@@ -8,6 +8,42 @@ IEEE 802.15.4-2020).
 At the moment, this is mostly a proof-of-concept and only FSK
 modulation is supported.
 
+Building & Installation
+=======================
+
+To build `gr-wisun`, run these commands:
+
+```
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=/path/to/install-dir ..
+make
+```
+
+Once built, installing is done with:
+
+```
+make install
+sudo ldconfig
+```
+
+Tests
+=====
+
+The directory `python/wisun` contains unit tests for each block. They
+can be executed with the following command (after doing the
+build-steps above):
+
+```
+make test
+```
+
+An individual test can be executed with `ctest`, e.g.:
+
+```
+ctest --output-on-failure -R rssi_tag_cc
+```
+
 Examples
 ========
 
