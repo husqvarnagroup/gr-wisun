@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 GNU Radio contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 /*!
  * \defgroup block GNU Radio WISUN C++ Signal Processing Blocks
  * \brief All C++ blocks that can be used from the WISUN GNU Radio

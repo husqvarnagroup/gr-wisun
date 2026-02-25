@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 GNU Radio contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import warnings
 import argparse
 from gnuradio.bindtool import BindingGenerator

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 GNU Radio contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # this is the channel and label where packages will be uploaded to if enabled
 # (see ../README.md)
 channel_targets:

@@ -1,5 +1,6 @@
 # Copyright 2021 Marcus Müller
 # SPDX-License-Identifier: LGPL-3.0-or-later
+
 class _clang_format_options:
     def __init__(self, clangfile=None):
         if not clangfile:

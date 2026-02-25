@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2026 GNU Radio contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #ifndef PYDOC_MACROS_H
 #define PYDOC_MACROS_H
 

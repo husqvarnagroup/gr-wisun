@@ -1,3 +1,7 @@
+REM SPDX-FileCopyrightText: 2026 GNU Radio contributors
+REM
+REM SPDX-License-Identifier: GPL-3.0-or-later
+
 setlocal EnableDelayedExpansion
 @echo on
 

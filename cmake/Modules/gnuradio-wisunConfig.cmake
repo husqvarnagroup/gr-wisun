@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 GNU Radio contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 find_package(PkgConfig)
 
 PKG_CHECK_MODULES(PC_GR_WISUN gnuradio-wisun)
