@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 GARDENA GmbH
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Check compliance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  reuse:
+    name: REUSE
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Python dependencies
+        run: pip install --require-hashes -r requirements.txt
+      - name: Enforce REUSE compliance
+        run: reuse lint
