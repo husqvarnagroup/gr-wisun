@@ -72,6 +72,10 @@
 #=============================================================================
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
+#
+# Source: https://gitlab.kitware.com/cmake/cmake/-/blob/b173b879f8c2a3035d826e1cfa1407380b6eb2ee/Modules/CMakeParseArguments.cmake
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 
 if(__CMAKE_PARSE_ARGUMENTS_INCLUDED)

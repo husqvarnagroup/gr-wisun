@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 GNU Radio contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
 title: Wi-SUN OOT Module
 version: 1.0
 brief: Out-of-tree module with Wi-SUN support blocks for GNU Radio.

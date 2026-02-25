@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 GNU Radio contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 {% set oot_name = "wisun" %}
 {% set name = "gnuradio-" + oot_name %}
 # Set package version from cleaned up git tags if possible,

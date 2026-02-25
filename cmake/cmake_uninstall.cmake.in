@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: LicenseRef-vtk-org-wiki
+#
+# SPDX-FileCopyrightText: Contributors to http://www.vtk.org/Wiki/CMake_FAQ
+#
 # http://www.vtk.org/Wiki/CMake_FAQ#Can_I_do_.22make_uninstall.22_with_CMake.3F
 
 IF(NOT EXISTS "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt")

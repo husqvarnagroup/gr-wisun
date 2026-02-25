@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 GNU Radio contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Utilities for reading values in header files
 
 from argparse import ArgumentParser

@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 GNU Radio contributors
+
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
 # gr-wisun conda recipe
 
 This recipe is for creating a package that can be installed into a [conda](https://docs.conda.io/en/latest/) environment. See the [Conda GNU Radio Guide](https://wiki.gnuradio.org/index.php/CondaInstall) for more information on using GNU Radio with conda.
