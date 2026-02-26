@@ -1,0 +1,46 @@
+name: code checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint:
+    name: lint Python files
+    runs-on: ubuntu-latest
+    steps:
+      - name: install flake8
+        run: pipx install flake8
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: run flake8
+        run: flake8 --exclude 'bindings' python/wisun
+
+  build_and_test:
+    name: build & test
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            doxygen \
+            git \
+            gnuradio \
+            gnuradio-dev
+      - name: build
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make
+      - name: run tests
+        run: |
+          cd build
+          make TEST_ARGS="--output-on-failure" test
