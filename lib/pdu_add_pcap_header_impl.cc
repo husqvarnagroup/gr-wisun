@@ -31,8 +31,8 @@ pdu_add_pcap_header::sptr pdu_add_pcap_header::make(const bool prepend_global_pc
  */
 pdu_add_pcap_header_impl::pdu_add_pcap_header_impl(const bool prepend_global_pcap_header)
     : gr::block("pdu_add_pcap_header",
-                gr::io_signature::make(0, 0, sizeof(0)),
-                gr::io_signature::make(0, 0, sizeof(0))),
+                gr::io_signature::make(0, 0, 0),
+                gr::io_signature::make(0, 0, 0)),
       d_prepend_global_pcap_header(prepend_global_pcap_header),
       d_global_pcap_header_done(false)
 {
