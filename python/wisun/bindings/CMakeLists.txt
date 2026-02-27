@@ -31,7 +31,8 @@ list(APPEND wisun_python_files
     pdu_add_pcap_header_python.cc
     rssi_tag_cc_python.cc
     power_squelch_relative_cc_python.cc
-    tag_based_dc_correction_ff_python.cc python_bindings.cc)
+    tag_based_dc_correction_ff_python.cc
+    pdu_add_pcapng_header_python.cc python_bindings.cc)
 
 gr_pybind_make_oot(wisun ../../.. gr::wisun "${wisun_python_files}")
 

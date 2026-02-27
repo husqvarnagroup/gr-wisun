@@ -18,7 +18,8 @@ list(APPEND wisun_sources
     pdu_add_pcap_header_impl.cc
     rssi_tag_cc_impl.cc
     power_squelch_relative_cc_impl.cc
-    tag_based_dc_correction_ff_impl.cc)
+    tag_based_dc_correction_ff_impl.cc
+    pdu_add_pcapng_header_impl.cc)
 
 set(wisun_sources
     "${wisun_sources}"

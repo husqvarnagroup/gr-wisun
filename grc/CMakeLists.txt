@@ -13,4 +13,5 @@ install(FILES
     wisun_pdu_add_pcap_header.block.yml
     wisun_rssi_tag_cc.block.yml
     wisun_power_squelch_relative_cc.block.yml
-    wisun_tag_based_dc_correction_ff.block.yml DESTINATION share/gnuradio/grc/blocks)
+    wisun_tag_based_dc_correction_ff.block.yml
+    wisun_pdu_add_pcapng_header.block.yml DESTINATION share/gnuradio/grc/blocks)
