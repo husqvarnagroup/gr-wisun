@@ -79,7 +79,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1496, 12.0]
+    coordinate: [1280, 12.0]
     rotation: 0
     state: enabled
 - name: rx_freq_correction
@@ -159,7 +159,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2048, 180.0]
+    coordinate: [1960, 268.0]
     rotation: 0
     state: true
 - name: analog_quadrature_demod_cf_0
@@ -175,7 +175,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1096, 340.0]
+    coordinate: [1024, 340.0]
     rotation: 0
     state: enabled
 - name: analog_sig_source_x_0
@@ -215,7 +215,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2408, 564.0]
+    coordinate: [1984, 588.0]
     rotation: 0
     state: true
 - name: blocks_file_sink_0_0
@@ -233,7 +233,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2728, 832.0]
+    coordinate: [2392, 1008.0]
     rotation: 0
     state: enabled
 - name: blocks_message_debug_1
@@ -248,7 +248,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2136, 980.0]
+    coordinate: [1712, 860.0]
     rotation: 0
     state: disabled
 - name: blocks_message_debug_1_0
@@ -263,9 +263,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2472, 988.0]
+    coordinate: [2096, 860.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_multiply_xx_0
   id: blocks_multiply_xx
   parameters:
@@ -300,7 +300,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1840, 984.0]
+    coordinate: [1424, 920.0]
     rotation: 0
     state: disabled
 - name: blocks_unpacked_to_packed_xx_0
@@ -319,7 +319,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1592, 852.0]
+    coordinate: [1152, 1028.0]
     rotation: 0
     state: enabled
 - name: digital_binary_slicer_fb_0
@@ -334,7 +334,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1952.0, 448]
+    coordinate: [1896.0, 400]
     rotation: 270
     state: enabled
 - name: digital_symbol_sync_xx_0
@@ -361,7 +361,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1600, 316.0]
+    coordinate: [1560, 276.0]
     rotation: 0
     state: enabled
 - name: low_pass_filter_0
@@ -419,7 +419,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1288, 12.0]
+    coordinate: [1072, 12.0]
     rotation: 0
     state: true
 - name: osmosdr_source_0
@@ -793,7 +793,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2456, 860.0]
+    coordinate: [2088, 1036.0]
     rotation: 0
     state: enabled
 - name: pdu_tagged_stream_to_pdu_0_0
@@ -810,7 +810,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1824, 860.0]
+    coordinate: [1368, 1036.0]
     rotation: 0
     state: enabled
 - name: qtgui_histogram_sink_x_1
@@ -897,7 +897,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2264, 152.0]
+    coordinate: [2176, 240.0]
     rotation: 0
     state: true
 - name: qtgui_sink_x_0
@@ -1052,7 +1052,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1600, 172.0]
+    coordinate: [1560, 92.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_1
@@ -1149,7 +1149,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2392, 372.0]
+    coordinate: [1936, 92.0]
     rotation: 0
     state: enabled
 - name: qtgui_time_sink_x_2
@@ -1246,7 +1246,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2608, 532.0]
+    coordinate: [2184, 556.0]
     rotation: 0
     state: true
 - name: wisun_correlate_sync_word_bb_0
@@ -1262,8 +1262,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2040, 636.0]
-    rotation: 0
+    coordinate: [1244.0, 576]
+    rotation: 270
     state: enabled
 - name: wisun_data_whitening_bb_0
   id: wisun_data_whitening_bb
@@ -1279,7 +1279,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1280, 852.0]
+    coordinate: [848, 1028.0]
     rotation: 0
     state: enabled
 - name: wisun_packet_data_gate_bb_0
@@ -1295,23 +1295,25 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1024, 860.0]
+    coordinate: [608, 1036.0]
     rotation: 0
     state: enabled
-- name: wisun_pdu_add_pcap_header_0
-  id: wisun_pdu_add_pcap_header
+- name: wisun_pdu_add_pcapng_header_0
+  id: wisun_pdu_add_pcapng_header
   parameters:
     affinity: ''
     alias: ''
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
-    prepend_global_pcap_header: 'True'
+    prepend_interface_description_block: 'True'
+    prepend_section_header_block: 'True'
+    use_tap_dlt: 'True'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2128, 860.0]
+    coordinate: [1656, 1016.0]
     rotation: 0
     state: enabled
 - name: wisun_power_squelch_relative_cc_0
@@ -1328,7 +1330,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [888, 228.0]
+    coordinate: [816, 228.0]
     rotation: 0
     state: enabled
 - name: wisun_rssi_tag_cc_0
@@ -1344,7 +1346,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [704, 236.0]
+    coordinate: [640, 236.0]
     rotation: 0
     state: enabled
 - name: wisun_tag_based_dc_correction_ff_0
@@ -1362,7 +1364,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1304, 320.0]
+    coordinate: [1232, 320.0]
     rotation: 0
     state: enabled
 
@@ -1384,13 +1386,13 @@ connections:
 - [osmosdr_source_0, '0', qtgui_sink_x_0, '0']
 - [pdu_pdu_to_tagged_stream_0_0, '0', blocks_file_sink_0_0, '0']
 - [pdu_tagged_stream_to_pdu_0_0, pdus, blocks_message_debug_1, print]
-- [pdu_tagged_stream_to_pdu_0_0, pdus, wisun_pdu_add_pcap_header_0, pdus]
+- [pdu_tagged_stream_to_pdu_0_0, pdus, wisun_pdu_add_pcapng_header_0, pdus]
 - [wisun_correlate_sync_word_bb_0, '0', blocks_char_to_float_0, '0']
 - [wisun_correlate_sync_word_bb_0, '0', wisun_packet_data_gate_bb_0, '0']
 - [wisun_data_whitening_bb_0, '0', blocks_unpacked_to_packed_xx_0, '0']
 - [wisun_packet_data_gate_bb_0, '0', wisun_data_whitening_bb_0, '0']
-- [wisun_pdu_add_pcap_header_0, pdus, blocks_message_debug_1_0, print]
-- [wisun_pdu_add_pcap_header_0, pdus, pdu_pdu_to_tagged_stream_0_0, pdus]
+- [wisun_pdu_add_pcapng_header_0, pdus, blocks_message_debug_1_0, print]
+- [wisun_pdu_add_pcapng_header_0, pdus, pdu_pdu_to_tagged_stream_0_0, pdus]
 - [wisun_power_squelch_relative_cc_0, '0', analog_quadrature_demod_cf_0, '0']
 - [wisun_rssi_tag_cc_0, '0', wisun_power_squelch_relative_cc_0, '0']
 - [wisun_tag_based_dc_correction_ff_0, '0', digital_symbol_sync_xx_0, '0']

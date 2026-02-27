@@ -15,7 +15,7 @@ namespace gr {
 namespace wisun {
 
 /*!
- * \brief <+description of block+>
+ * \brief This block adds a PCAP-NG header to each received PDU.
  * \ingroup wisun
  *
  */
@@ -26,6 +26,11 @@ public:
 
     /*!
      * \brief Return a shared_ptr to a new instance of wisun::pdu_add_pcapng_header.
+     * \param prepend_section_header_block Whether to add initial PDU with SHB
+     * \param prepend_interface_description_block Whether to add initial PDU with IDB
+     * \param use_tap_dlt Whether to use IEEE 802.15.4 TAP data link-type instead of
+     * regular IEEE 802.15.4 data link-type. This allows adding additional metadata (such
+     * as RSSI) to the packets.
      *
      * To avoid accidental use of raw pointers, wisun::pdu_add_pcapng_header's
      * constructor is in a private implementation
@@ -33,7 +38,8 @@ public:
      * creating new instances.
      */
     static sptr make(const bool prepend_section_header_block,
-                     const bool prepend_interface_description_block);
+                     const bool prepend_interface_description_block,
+                     const bool use_tap_dlt);
 };
 
 } // namespace wisun

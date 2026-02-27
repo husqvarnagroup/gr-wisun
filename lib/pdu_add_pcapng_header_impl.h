@@ -16,20 +16,19 @@ namespace wisun {
 class pdu_add_pcapng_header_impl : public pdu_add_pcapng_header
 {
 private:
-    // Nothing to declare in this block.
+    bool d_prepend_section_header_block;
+    bool d_section_header_block_done;
+    bool d_prepend_interface_description_block;
+    bool d_interface_description_block_done;
+    bool d_use_tap_dlt;
 
 public:
     pdu_add_pcapng_header_impl(const bool prepend_section_header_block,
-                               const bool prepend_interface_description_block);
+                               const bool prepend_interface_description_block,
+                               const bool use_tap_dlt);
     ~pdu_add_pcapng_header_impl();
 
-    // Where all the action really happens
-    void forecast(int noutput_items, gr_vector_int& ninput_items_required);
-
-    int general_work(int noutput_items,
-                     gr_vector_int& ninput_items,
-                     gr_vector_const_void_star& input_items,
-                     gr_vector_void_star& output_items);
+    void handle_msg(pmt::pmt_t msg);
 };
 
 } // namespace wisun

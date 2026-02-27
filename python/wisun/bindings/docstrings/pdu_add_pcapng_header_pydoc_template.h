@@ -15,13 +15,11 @@
  */
 
 
-
- static const char *__doc_gr_wisun_pdu_add_pcapng_header = R"doc()doc";
-
-
- static const char *__doc_gr_wisun_pdu_add_pcapng_header_pdu_add_pcapng_header_0 = R"doc()doc";
+static const char* __doc_gr_wisun_pdu_add_pcapng_header = R"doc()doc";
 
 
- static const char *__doc_gr_wisun_pdu_add_pcapng_header_make = R"doc()doc";
+static const char* __doc_gr_wisun_pdu_add_pcapng_header_pdu_add_pcapng_header_0 =
+    R"doc()doc";
 
-  
+
+static const char* __doc_gr_wisun_pdu_add_pcapng_header_make = R"doc()doc";
