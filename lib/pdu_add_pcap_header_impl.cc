@@ -96,7 +96,7 @@ void pdu_add_pcap_header_impl::handle_msg(pmt::pmt_t msg)
         *(uint32_t *)&buf[8] = (uint32_t)0; /* reserved 1 */
         *(uint32_t *)&buf[12] = (uint32_t)0; /* reserved 2 */
         *(uint32_t *)&buf[16] = (uint32_t)0x7ff; /* snap len */
-        *(uint16_t *)&buf[20] = (uint32_t)230; /* link type: 195 (WTAP_ENCAP_IEEE802_15_4_NOFCS) */
+        *(uint16_t *)&buf[20] = (uint32_t)230; /* link type: 230 (WTAP_ENCAP_IEEE802_15_4_NOFCS) */
         pmt::pmt_t global_hdr_msg = pmt::cons(pmt::get_PMT_NIL(), global_header_vect);
         message_port_pub(msgport_names::pdus(), global_hdr_msg);
 
