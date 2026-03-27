@@ -19,7 +19,8 @@ add_subdirectory(bindings)
 ########################################################################
 # Install python sources
 ########################################################################
-gr_python_install(FILES __init__.py DESTINATION ${GR_PYTHON_DIR}/gnuradio/wisun)
+gr_python_install(FILES __init__.py
+    baseband_channel_receiver.py DESTINATION ${GR_PYTHON_DIR}/gnuradio/wisun)
 
 ########################################################################
 # Handle the unit tests
