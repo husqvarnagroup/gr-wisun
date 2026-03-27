@@ -19,5 +19,5 @@ except ModuleNotFoundError:
     pass
 
 # import any pure python here
-from .baseband_channel_receiver import baseband_channel_receiver
+from .baseband_channel_receiver import baseband_channel_receiver  # noqa
 #
