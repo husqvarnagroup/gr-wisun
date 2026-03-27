@@ -15,6 +15,7 @@
 #include "pdu_add_pcapng_header_impl.h"
 #include <gnuradio/pdu.h>
 #include <gnuradio/io_signature.h>
+#include <pmt/pmt.h>
 
 #define WTAP_ENCAP_IEEE802_15_4_NOFCS (230)
 #define WTAP_ENCAP_IEEE802_15_4_TAP (283)
@@ -31,6 +32,15 @@ static size_t idb_length = sizeof(struct pcapng_interface_description_block_base
 static size_t epb_base_length = sizeof(struct pcapng_enhanced_packet_block_base); /* length of EPB header at beginning of EPB */
 static size_t epb_header_full_length = epb_base_length + 4; /* full length of EPB including 'block total length' at end */
 
+static size_t tap_dlt_header_length_offset = 4;  /* length specified in TAP DLT headers does not include first 4 bytes (2 byte type, 2 byte length) */
+
+static const pmt::pmt_t pmt_key_rss = pmt::string_to_symbol("packet-rssi");
+static const pmt::pmt_t pmt_key_bit_rate = pmt::string_to_symbol("packet-bit-rate");
+static const pmt::pmt_t pmt_key_channel_number = pmt::string_to_symbol("packet-channel-number");
+static const pmt::pmt_t pmt_key_channel_page = pmt::string_to_symbol("packet-channel-page");
+static const pmt::pmt_t pmt_key_phy_band = pmt::string_to_symbol("packet-phy-band");
+static const pmt::pmt_t pmt_key_phy_type = pmt::string_to_symbol("packet-phy-type");
+static const pmt::pmt_t pmt_key_phy_mode = pmt::string_to_symbol("packet-phy-mode");
 
 pdu_add_pcapng_header::sptr
 pdu_add_pcapng_header::make(const bool prepend_section_header_block,
@@ -158,19 +168,21 @@ void pdu_add_pcapng_header_impl::handle_msg(pmt::pmt_t msg)
 
     /* create output PDU */
     size_t tap_header_length = 0;
-    bool has_rssi = false;
-    pmt::pmt_t rssi_tag;
-    float rssi;
     if (d_use_tap_dlt) {
         tap_header_length = 4;
 
-        /* RSSI available? */
-        if (pmt::dict_has_key(msg_meta, pmt::string_to_symbol("packet-rssi"))) {
-            has_rssi = true;
-            tap_header_length += 8;
-            rssi_tag = pmt::assoc(pmt::string_to_symbol("packet-rssi"), msg_meta);
-            rssi = pmt::to_float(pmt::cdr(rssi_tag)); /* TODO allow RSSI offset correction */
-            d_logger->debug("packet RSSI: {:f} dBm", rssi);
+        /* adjust length for metadata */
+        if (pmt::dict_has_key(msg_meta, pmt_key_rss)) {
+            tap_header_length += sizeof(struct ieee802_15_4_tap_dlt_header_rss);
+        }
+        if (pmt::dict_has_key(msg_meta, pmt_key_bit_rate)) {
+            tap_header_length += sizeof(struct ieee802_15_4_tap_dlt_header_bit_rate);
+        }
+        if (pmt::dict_has_key(msg_meta, pmt_key_channel_number)) {
+            tap_header_length += sizeof(struct ieee802_15_4_tap_dlt_header_channel_assignment);
+        }
+        if (pmt::dict_has_key(msg_meta, pmt_key_phy_band)) {
+            tap_header_length += sizeof(struct ieee802_15_4_tap_dlt_header_sun_phy_information);
         }
     }
     size_t output_length = epb_header_full_length + tap_header_length + payload_length + padding;
@@ -211,10 +223,16 @@ void pdu_add_pcapng_header_impl::handle_msg(pmt::pmt_t msg)
         idx += sizeof(tap_hdr);
 
         /* RSSI */
-        if (has_rssi) {
+        if (pmt::dict_has_key(msg_meta, pmt_key_rss)) {
             struct ieee802_15_4_tap_dlt_header_rss rss_hdr;
-            rss_hdr.type   = htole16(1); /* type 1 = RSS */
-            rss_hdr.length = htole16(4); /* length of data: 4 bytes */
+            pmt::pmt_t rssi_tag;
+            float rssi;
+
+            rssi_tag = pmt::assoc(pmt_key_rss, msg_meta);
+            rssi = pmt::to_float(pmt::cdr(rssi_tag)); /* TODO allow RSSI offset correction */
+            d_logger->debug("packet RSSI: {:f} dBm", rssi);
+            rss_hdr.type = htole16(IEEE802_15_4_TAP_DLT_TLV_TYPE_RSS);
+            rss_hdr.length = htole16(sizeof(rss_hdr) - tap_dlt_header_length_offset);
 
             /*
              * Note: on a little-endian machine, we could just use
@@ -231,6 +249,71 @@ void pdu_add_pcapng_header_impl::handle_msg(pmt::pmt_t msg)
 
             memcpy(&out[idx], &rss_hdr, sizeof(rss_hdr));
             idx += sizeof(rss_hdr);
+        }
+
+        /* bit rate */
+        if (pmt::dict_has_key(msg_meta, pmt_key_bit_rate)) {
+            struct ieee802_15_4_tap_dlt_header_bit_rate bit_rate_hdr;
+
+            pmt::pmt_t bit_rate_tag = pmt::assoc(pmt_key_bit_rate, msg_meta);
+            uint32_t bit_rate = pmt::to_long(pmt::cdr(bit_rate_tag));
+
+            bit_rate_hdr.type = htole16(IEEE802_15_4_TAP_DLT_TLV_TYPE_BIT_RATE);
+            bit_rate_hdr.length = htole16(sizeof(bit_rate_hdr) - tap_dlt_header_length_offset);
+            bit_rate_hdr.bit_rate = bit_rate;
+
+            memcpy(&out[idx], &bit_rate_hdr, sizeof(bit_rate_hdr));
+            idx += sizeof(bit_rate_hdr);
+        }
+
+        /* channel assignment */
+        if (pmt::dict_has_key(msg_meta, pmt_key_channel_number)) {
+            struct ieee802_15_4_tap_dlt_header_channel_assignment channel_hdr;
+
+            pmt::pmt_t channel_number_tag = pmt::assoc(pmt_key_channel_number, msg_meta);
+            uint16_t channel_number = pmt::to_long(pmt::cdr(channel_number_tag));
+            uint8_t channel_page = 0;
+            if (pmt::dict_has_key(msg_meta, pmt_key_channel_page)) {
+                pmt::pmt_t channel_page_tag = pmt::assoc(pmt_key_channel_page, msg_meta);
+                channel_page = pmt::to_long(pmt::cdr(channel_page_tag));
+            }
+
+            channel_hdr.type = htole16(IEEE802_15_4_TAP_DLT_TLV_TYPE_CHANNEL_ASSIGNMENT);
+            channel_hdr.length = htole16(3); /* note: padding does not count towards length */
+            channel_hdr.channel_number = channel_number;
+            channel_hdr.channel_page = channel_page;
+            channel_hdr.padding = 0;
+
+            memcpy(&out[idx], &channel_hdr, sizeof(channel_hdr));
+            idx += sizeof(channel_hdr);
+        }
+
+        /* SUN PHY information */
+        if (pmt::dict_has_key(msg_meta, pmt_key_phy_band)) {
+            struct ieee802_15_4_tap_dlt_header_sun_phy_information phy_hdr;
+
+            pmt::pmt_t phy_band_tag = pmt::assoc(pmt_key_phy_band, msg_meta);
+            uint8_t phy_band = pmt::to_long(pmt::cdr(phy_band_tag));
+            uint8_t phy_type = 0;
+            uint8_t phy_mode = 0;
+            if (pmt::dict_has_key(msg_meta, pmt_key_phy_type)) {
+                pmt::pmt_t phy_type_tag = pmt::assoc(pmt_key_phy_type, msg_meta);
+                phy_type = pmt::to_long(pmt::cdr(phy_type_tag));
+            }
+            if (pmt::dict_has_key(msg_meta, pmt_key_phy_mode)) {
+                pmt::pmt_t phy_mode_tag = pmt::assoc(pmt_key_phy_mode, msg_meta);
+                phy_mode = pmt::to_long(pmt::cdr(phy_mode_tag));
+            }
+
+            phy_hdr.type = htole16(IEEE802_15_4_TAP_DLT_TLV_TYPE_SUN_PHY_INFORMATION);
+            phy_hdr.length = htole16(3); /* note: padding does not count towards length */
+            phy_hdr.phy_band = phy_band;
+            phy_hdr.phy_type = phy_type;
+            phy_hdr.phy_mode = phy_mode;
+            phy_hdr.padding = 0;
+
+            memcpy(&out[idx], &phy_hdr, sizeof(phy_hdr));
+            idx += sizeof(phy_hdr);
         }
     }
 
