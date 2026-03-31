@@ -50,6 +50,23 @@ An individual test can be executed with `ctest`, e.g.:
 ctest --output-on-failure -R rssi_tag_cc
 ```
 
+Tests for Python code are implemented with pytest and can be executed
+with:
+
+```
+pytest
+```
+
+`pytest` can also be used to execute all tests at once:
+
+```
+pytest python/wisun/{qa,test}_*.py
+```
+
+Note that this will execute the unit tests for signal processing
+blocks against the installed code, rather than the code in the working
+directory.
+
 Examples
 ========
 

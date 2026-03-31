@@ -38,13 +38,17 @@ jobs:
             git \
             gnuradio \
             gnuradio-dev
+          pipx install pytest
+      - name: run Python code tests
+        run: |
+          pytest
       - name: build
         run: |
           mkdir build
           cd build
           cmake ..
           make
-      - name: run tests
+      - name: run signal processing block tests
         run: |
           cd build
           make TEST_ARGS="--output-on-failure" test
