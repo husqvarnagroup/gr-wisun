@@ -33,7 +33,7 @@ class baseband_channel_receiver(gr.hier_block2):
         # Blocks
         ##################################################
         self.rssi_tag_block = wisun.rssi_tag_cc(self._samples_per_symbol * RSSI_TAG_SYMBOLS)
-        self.power_squelch_block = wisun.power_squelch_relative_cc(10, 0.01)
+        self.power_squelch_block = wisun.power_squelch_relative_cc(20, 0.01)
         self.fm_demod_block = analog.quadrature_demod_cf(1)
         self.dc_correction_block = wisun.tag_based_dc_correction_ff('squelch_sob', 'squelch_eob',
                                                                     self._samples_per_symbol * DC_CORRECTION_SYMBOLS)

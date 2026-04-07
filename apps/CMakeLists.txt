@@ -8,4 +8,6 @@
 
 include(GrPython)
 
-gr_python_install(PROGRAMS DESTINATION bin)
+gr_python_install(PROGRAMS
+  gr-wisun-single-channel-sniffer
+  DESTINATION bin)
