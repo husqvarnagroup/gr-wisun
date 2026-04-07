@@ -14,6 +14,9 @@
 # IEEE 802.15.4-2020
 #
 
+# [802.15.4] 10.1.3.9
+SUN_FSK_CHANNEL_PAGE = 10
+
 # [802.15.4] Table 7-21: Frequency band identifier values
 FREQUENCY_BAND_IDENTIFIERS = {
     # Frequency band identifier: Band designation
@@ -202,8 +205,9 @@ WISUN_CHANNEL_PLANS = {
     112: ("2400_2483_200", 0.2e6,  2400.2e6),
     113: ("2400_2483_400", 0.4e6,  2400.4e6),
     128:   ("920_925_250", 0.25e6,  920.625e6),
-    144:   ("779_787_200", 0.2e6,   779.2e6),
-    145:   ("779_787_400", 0.4e6,   779.4e6),
+    # the following two plans are commented, because they are not actually used by any supported parameters:
+    # 144:   ("779_787_200", 0.2e6,   779.2e6),
+    # 145:   ("779_787_400", 0.4e6,   779.4e6),
     160:   ("470_510_200", 0.2e6,   470.2e6),
 }
 
@@ -244,6 +248,42 @@ WISUN_FREQUENCY_BANDS = {  # informal only
     113: (2400, 2483.5),
     128: (920.5, 924.5),
     160: (470, 510),
+}
+
+WISUN_FREQUENCY_BAND_802154_MAPPING = {  # this is somewhat unclear; only needed in metadata for Wireshark
+    # Channel Plan ID: IEEE 802.15.4 SUN frequency band
+    1:   7,
+    2:   7,
+    3:   7,
+    4:   7,
+    5:   7,
+    21:  9,
+    22:  9,
+    23:  9,
+    24:  9,
+    32:  4,
+    33:  4,
+    34:  15,
+    35:  15,
+    36:  15,  # might be wrong
+    37:  15,  # might be wrong
+    39:  14,  # might be wrong
+    40:  14,  # might be wrong
+    41:  24,
+    42:  24,
+    43:  24,
+    48:  18,
+    49:  18,
+    64:  23,
+    65:  23,
+    80:  21,
+    81:  21,
+    96:  8,
+    97:  8,
+    112: 13,
+    113: 13,
+    128: 22,
+    160: 2,
 }
 
 # [Wi-SUN] 5.4 Frequency Bands and Channel Parameters (Table 8)

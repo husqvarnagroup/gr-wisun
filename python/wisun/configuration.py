@@ -6,6 +6,7 @@
 
 """Support for Wi-SUN configuration parsing & representation."""
 
+from collections import OrderedDict
 from math import log2, floor
 
 from .parameters import PHY_TYPES, PHY_MODES, WISUN_COUNTRY_CODES, WISUN_PHY_TYPES, WISUN_PHY_MODES_FSK, \
@@ -115,6 +116,22 @@ class RadioConfiguration:
             s += " (not a valid 802.15.4 PHY mode)"
         return s
 
+    def info(self) -> OrderedDict:
+        """Return info in human readable form as ordered dictionary."""
+        if self.is_valid_802154_phy_mode():
+            phy_mode_info = "%d / %d" % self.get_802154_phy_type_mode()
+        else:
+            phy_mode_info = "(not a valid 802.15.4 PHY mode)"
+        return OrderedDict([
+            ("Modulation", self.modulation),
+            ("Modulation index", f"{self.modulation_index:.1f}"),
+            ("Symbol rate", f"{self.symbol_rate / 1000:.1f} kHz"),
+            ("Channel 0 center frequency", f"{self.channel_0_center_frequency / 1e6:.1f} MHz"),
+            ("Channel spacing", f"{self.channel_spacing / 1000:.1f} kHz"),
+            ("Channels", f"{', '.join([str(c) for c in self.channels])}"),
+            ("802.15.4 PHY type / mode", phy_mode_info),
+        ])
+
     def bits_per_symbol(self) -> int:
         """Return number of bits per symbol."""
         if self.modulation == "2-FSK":
@@ -127,6 +144,10 @@ class RadioConfiguration:
     def data_rate(self) -> int:
         """Calculate data rate in bps."""
         return self.symbol_rate * self.bits_per_symbol()
+
+    def channel_frequency(self, channel) -> int:
+        """Calculate frequency for given channel in Hz."""
+        return self.channel_0_center_frequency + channel * self.channel_spacing
 
     def is_valid_802154_phy_mode(self) -> bool:
         """Check if given configuration is a valid IEEE 802.15.4-2020 PHY mode."""
@@ -189,6 +210,21 @@ class WiSunConfiguration:
             f"PHY mode ID: 0x{self.phy_mode_id:02x}, number of channels: {self.number_of_channels}, " \
             f"allowed channels: {allowed}"
         return s
+
+    def info(self) -> OrderedDict:
+        """Return info in human readable form as ordered dictionary."""
+        if len(self.allowed_channels) > 0:
+            allowed = ",".join([str(c) for c in self.allowed_channels])
+        else:
+            allowed = "all"
+        return OrderedDict([
+            ("Regulatory domain", self.regulatory_domain),
+            ("Channel plan", str(self.channel_plan_id)),
+            ("Frequency band", f"{self.frequency_band()[0]:.1f} MHz — {self.frequency_band()[1]:.1f} MHz"),
+            ("PHY mode ID", f"0x{self.phy_mode_id:02x}"),
+            ("Number of channels", str(self.number_of_channels)),
+            ("Allowed channels", allowed),
+        ])
 
     def phy_type(self) -> int:
         """Return Wi-SUN PHY type."""

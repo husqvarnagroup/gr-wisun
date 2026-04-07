@@ -94,3 +94,31 @@ Packets should now be visible in the GUI and in Wireshark:
 
 <img src="docs/screenshots/simple_sniffer_gui.png" alt="Simple Sniffer GUI" width="600"/>
 <img src="docs/screenshots/simple_sniffer_wireshark.png" alt="Wireshark" width="600"/>
+
+
+Applications
+============
+
+gr-wisun-single-channel-sniffer
+-------------------------------
+
+Allows sniffing a single Wi-SUN channel. Packets are output in PCAPNG
+format and can directly be parsed with Wireshark.
+
+Example usage - receive packets on channel 7 (EU, channel plan 32, PHY
+type 0, PHY mode 1):
+
+```
+mkfifo /tmp/gr-wisun-sniffer
+gr-wisun-single-channel-sniffer --gain 40 -r EU -p 32 -t 0 -m 1 -c 7 --dest-file /tmp/gr-wisun-sniffer
+```
+
+In a separate terminal:
+
+```
+wireshark -k -i /tmp/gr-wisun-sniffer
+```
+
+Note: the gain is somewhat critical. If performance is poor, it may
+help to check with a GUI application (e.g. `osmomocom_fft`) first and
+experiment with different gain settings.
