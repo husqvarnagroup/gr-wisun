@@ -214,7 +214,7 @@ class WiSunConfiguration:
     def info(self) -> OrderedDict:
         """Return info in human readable form as ordered dictionary."""
         if len(self.allowed_channels) > 0:
-            allowed = ",".join([str(c) for c in self.allowed_channels])
+            allowed = ", ".join([str(c) for c in self.allowed_channels])
         else:
             allowed = "all"
         return OrderedDict([
