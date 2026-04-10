@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+# coding: utf-8
+#
+# Copyright (c) 2026 Gardena GmbH
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""Sniffer application to receive a multiple Wi-SUN channels for packet analysis with Wireshark."""
+
+import os
+import signal
+import stat
+import sys
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+from collections import OrderedDict
+
+import osmosdr
+from gnuradio import blocks, gr, pdu, wisun
+from gnuradio.fft import window
+from gnuradio.filter import firdes, pfb
+from gnuradio.wisun.configuration import (InvalidWiSunChannelPlanException, InvalidWiSunParametersException,
+                                          InvalidWiSunPhyModeException, InvalidWiSunPhyTypeException,
+                                          InvalidWiSunRegulatoryDomainException, UnsupportedWiSunChannelException,
+                                          UnsupportedWiSunPhyModeIdException, WiSunConfiguration)
+from gnuradio.wisun.parameters import (SUN_FSK_CHANNEL_PAGE, WISUN_CHANNEL_PLANS, WISUN_COUNTRY_CODES,
+                                       WISUN_FREQUENCY_BAND_802154_MAPPING, WISUN_FREQUENCY_BANDS, WISUN_PHY_MODES_FSK,
+                                       WISUN_PHY_TYPES)
+from gnuradio.wisun.util import tabular_pretty_print
+
+
+class GrWisunSingleChannelSniffer(gr.top_block):
+    """Single channel sniffer main class."""
+
+    def __init__(self, device_string, gain, dest_file, wisun_config):
+        gr.top_block.__init__(self)
+        radio_config = wisun_config.radio_configuration()
+
+        ##################################################
+        # Variables
+        ##################################################
+
+        # Determine sample rate, number of channels & center frequency
+        #
+        # The strategy for this is as follows:
+        # - determine highest & lowest channel
+        # - add one channel at the top as channelizer will split one channel at the edge of the band
+        # - determine number of channels (highest - lowest + 1)
+        # - add one channel at the bottom if channel number is odd (we want an even number of channels)
+        # - use lower middle channel for center frequency as we always have a buffer at the top, but not at the bottom
+        # - calculate sample rate as number of channels * spacing
+        #
+        # See also https://wiki.gnuradio.org/index.php/Polyphase_Channelizer
+
+        highest = max(radio_config.channels)
+        lowest = min(radio_config.channels)
+        highest += 1
+        n_channels = highest - lowest + 1
+        n_active_channels = len(radio_config.channels)
+        if n_channels % 2 != 0:
+            lowest -= 1
+            n_channels += 1
+        middle = int(lowest + n_channels / 2 - 1)
+        center_frequency = radio_config.channel_frequency(middle)
+        sample_rate = n_channels * radio_config.channel_spacing
+        oversampling = 1
+        samples_per_symbol = sample_rate / n_channels / radio_config.symbol_rate * oversampling
+        if samples_per_symbol != int(samples_per_symbol):
+            sys.stderr.write(f"ERROR: samples per symbol is not an integer: {samples_per_symbol}\n")
+            sys.exit(1)
+        samples_per_symbol = int(samples_per_symbol)
+        filter_bandwidth = radio_config.channel_spacing / 2 * 0.8
+        filter_transition = radio_config.channel_spacing / 2 * 0.2
+        print("Receiver configuration:")
+        tabular_pretty_print(OrderedDict([
+            ("Sample rate", f"{sample_rate / 1e6:.1f} MHz"),
+            ("Frequency", f"{center_frequency / 1e6:.1f} MHz"),
+            ("Oversampling", f"{oversampling}"),
+            ("Samples per symbol", f"{samples_per_symbol}"),
+            ("Gain", f"{gain}"),
+            ("Number of PFB channels", f"{n_channels}"),
+            ("Active channels", f"{n_active_channels}"),
+            ("Lowest channel", f"{lowest}"),
+            ("Middle channel", f"{middle}"),
+            ("Highest channel", f"{highest}"),
+            ("PFB channel filter bandwidth", f"{filter_bandwidth/1e3:.1f} kHz"),
+            ("PFB channel filter transition", f"{filter_transition/1e3:.1f} kHz"),
+        ]))
+
+        metadata = {
+            "packet-bit-rate": radio_config.data_rate(),
+            "packet-channel-page": SUN_FSK_CHANNEL_PAGE,
+            "packet-phy-band": WISUN_FREQUENCY_BAND_802154_MAPPING[wisun_config.channel_plan_id],
+        }
+        if radio_config.is_valid_802154_phy_mode():
+            phy_type, phy_mode = radio_config.get_802154_phy_type_mode()
+            metadata['packet-phy-type'] = phy_type
+            metadata['packet-phy-mode'] = phy_mode
+
+        ##################################################
+        # Blocks (without individual streams)
+        ##################################################
+        if device_string is None:
+            osmosdr_source = osmosdr.source()
+        else:
+            osmosdr_source = osmosdr.source(device_string)
+        osmosdr_source.set_sample_rate(sample_rate)
+        osmosdr_source.set_center_freq(center_frequency, 0)
+        osmosdr_source.set_gain_mode(False, 0)
+        osmosdr_source.set_gain(gain, 0)
+        osmosdr_source.set_if_gain(0, 0)
+        osmosdr_source.set_bb_gain(0, 0)
+        osmosdr_source.set_bandwidth(0, 0)
+
+        pfb_channelizer = pfb.channelizer_ccf(
+            numchans=n_channels,
+            taps=firdes.low_pass(
+                1,
+                sample_rate,
+                filter_bandwidth,
+                filter_transition,
+                window.WIN_HAMMING,
+                6.76),
+            oversample_rate=oversampling,
+            atten=100
+        )
+
+        pdu_to_tagged_stream = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
+        file_sink = blocks.file_sink(gr.sizeof_char*1, dest_file, False)
+        file_sink.set_unbuffered(True)
+
+        ##################################################
+        # Connections (without individual streams)
+        ##################################################
+        self.connect((osmosdr_source, 0), (pfb_channelizer, 0))
+        self.connect((pdu_to_tagged_stream, 0), (file_sink, 0))
+
+        ##################################################
+        # Per-channel blocks & connections
+        ##################################################
+        for pfb_channel in range(n_channels):
+            if pfb_channel <= n_channels / 2:
+                actual_channel = middle + pfb_channel
+            else:
+                offset = n_channels // 2 + 1
+                actual_channel = lowest + pfb_channel - offset
+            in_use = actual_channel in radio_config.channels
+            print(f"PFB channel {pfb_channel:2}/{n_channels} is channel {actual_channel:2} " +
+                  f"({radio_config.channel_frequency(actual_channel)/1e6:.1f} MHz): " +
+                  ("active -> setting up channel receiver" if in_use else "disabled -> connecting to null sink"))
+            if in_use:
+                metadata["packet-channel-number"] = actual_channel
+                baseband_channel_receiver = wisun.baseband_channel_receiver(samples_per_symbol, metadata=metadata)
+                add_pcap_hdr = wisun.pdu_add_pcapng_header(True, True, True)
+                self.connect((pfb_channelizer, pfb_channel), (baseband_channel_receiver, 0))
+                self.msg_connect((baseband_channel_receiver, 'pdus'), (add_pcap_hdr, 'pdus'))
+                self.msg_connect((add_pcap_hdr, 'pdus'), (pdu_to_tagged_stream, 'pdus'))
+            else:
+                null_sink = blocks.null_sink(gr.sizeof_gr_complex)
+                self.connect((pfb_channelizer, pfb_channel), null_sink)
+
+
+def main():
+    parser = ArgumentParser(description="Single channel Wi-SUN sniffer.", formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--device', type=str, default=None,
+                        help="OsmoSDR device string (leave empty if only one SDR connected)")
+    parser.add_argument('--gain', type=int, default=30, help="SDR hardware RX gain [dB]")
+    parser.add_argument('--dest-file', type=str, default="/tmp/gr-wisun-sniffer", help="Output file (FIFO)")
+    parser.add_argument('-r', '--regulatory-domain', type=str, default="EU", help="Wi-SUN regulatory domain")
+    parser.add_argument('-p', '--channel-plan', type=int, default=32, help="Wi-SUN channel plan ID")
+    parser.add_argument('-t', '--phy-type', type=int, default=0, help="Wi-SUN PHY type")
+    parser.add_argument('-m', '--phy-mode', type=int, default=1, help="Wi-SUN PHY mode")
+    parser.add_argument('-c', '--channels', type=str, default="",
+                        help="Wi-SUN channels to receive; empty: all channels")
+    parser.add_argument('--list-regulatory-domains', action="store_true",
+                        help="List Wi-SUN regulatory domains & exit")
+    parser.add_argument('--list-channel-plans', action="store_true",
+                        help="List Wi-SUN channel plans & exit")
+    parser.add_argument('--list-phy-types', action="store_true",
+                        help="List Wi-SUN PHY types (first 4 bits of PHY mode ID) & exit")
+    parser.add_argument('--list-phy-modes', action="store_true",
+                        help="List Wi-SUN PHY modes for FSK (second 4 bits of PHY mode ID) & exit")
+    args = parser.parse_args()
+
+    if args.list_regulatory_domains:
+        for country in sorted(WISUN_COUNTRY_CODES.keys()):
+            print(f"{country}: {WISUN_COUNTRY_CODES[country]}")
+        sys.exit(0)
+
+    if args.list_channel_plans:
+        print("ID\tName\t\tFrequency band\t\tChannel spacing")
+        print('-'*80)
+        for id_ in sorted(WISUN_CHANNEL_PLANS.keys()):
+            name, spacing, f0_center_freq = WISUN_CHANNEL_PLANS[id_]
+            band = WISUN_FREQUENCY_BANDS[id_]
+            print(f"{id_}\t{name}\t{band[0]:.1f} - {band[1]:.1f} MHz\t{spacing / 1000:.0f} kHz")
+        sys.exit(0)
+
+    if args.list_phy_types:
+        for id_ in sorted(WISUN_PHY_TYPES.keys()):
+            print(f"{id_}: {WISUN_PHY_TYPES[id_]}")
+        sys.exit(0)
+
+    if args.list_phy_modes:
+        print("ID  Modulation  Symbol rate  Modulation Index")
+        print("-"*80)
+        for id_ in sorted(WISUN_PHY_MODES_FSK.keys()):
+            modulation, symbol_rate, modulation_index, _ = WISUN_PHY_MODES_FSK[id_]
+            print(f"{id_}   {modulation}       {symbol_rate / 1000:3.0f} kbps     {modulation_index:.1f}")
+        sys.exit(0)
+
+    # check if dest_file exists & is a FIFO; create if necessary
+    if os.path.exists(args.dest_file):
+        if not stat.S_ISFIFO(os.stat(args.dest_file).st_mode):
+            sys.stderr.write(f"ERROR: file '{args.dest_file}' exists, but is not a FIFO\n")
+            sys.exit(1)
+    else:
+        os.mkfifo(args.dest_file)
+
+    phy_mode_id = (args.phy_type << 4) + args.phy_mode
+    if len(args.channels) == 0:
+        channels = []
+    else:
+        channels = [int(x) for x in args.channels.split(',')]
+
+    try:
+        config = WiSunConfiguration(regulatory_domain=args.regulatory_domain,
+                                    channel_plan_id=args.channel_plan,
+                                    phy_mode_id=phy_mode_id,
+                                    allowed_channels=channels)
+    except (InvalidWiSunChannelPlanException, InvalidWiSunParametersException,
+            InvalidWiSunPhyModeException, InvalidWiSunPhyTypeException,
+            InvalidWiSunRegulatoryDomainException, UnsupportedWiSunChannelException,
+            UnsupportedWiSunPhyModeIdException) as e:
+        sys.stderr.write(f"ERROR: {e}\n")
+        sys.exit(1)
+
+    print("WiSUN configuration:")
+    tabular_pretty_print(config.info())
+    print("Radio configuration:")
+    tabular_pretty_print(config.radio_configuration().info())
+
+    if config.is_ofdm():
+        sys.stderr.write("ERROR: OFDM modes are not (yet) supported.\n")
+        sys.exit(1)
+
+    sniffer = GrWisunSingleChannelSniffer(args.device, args.gain, args.dest_file, config)
+
+    def sig_handler(sig=None, frame=None):
+        sniffer.stop()
+        sniffer.wait()
+
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, sig_handler)
+    signal.signal(signal.SIGTERM, sig_handler)
+
+    sniffer.start()
+
+    try:
+        input('Press Enter to quit: ')
+    except EOFError:
+        pass
+    sniffer.stop()
+    sniffer.wait()
+
+
+if __name__ == '__main__':
+    main()

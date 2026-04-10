@@ -126,3 +126,26 @@ wireshark -k -i /tmp/gr-wisun-sniffer
 Note: the gain is somewhat critical. If performance is poor, it may
 help to check with a GUI application (e.g. `osmomocom_fft`) first and
 experiment with different gain settings.
+
+
+gr-wisun-multi-channel-sniffer
+------------------------------
+
+Allows sniffing multiple or all Wi-SUN channels of a given channel
+plan.
+
+Note: this is currently very CPU-heavy.
+
+Example usage - receive all channels for EU channel plan 33 with PHY
+type 0 (FSK without FEC) and PHY mode 3 (2-FSK, 100 kbps, modulation
+index 0.5):
+
+```
+gr-wisun-multi-channel-sniffer -r EU -p 33 -t 0 -m 3
+```
+
+In a separate terminal:
+
+```
+wireshark -k -i /tmp/gr-wisun-sniffer
+```
