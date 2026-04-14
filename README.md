@@ -74,9 +74,10 @@ Basic Sniffer
 -------------
 
 The file `examples/basic_sniffer.grc` contains a GNU Radio Companion
-flow graph for a basic sniffer. It receives packets on a single channel and writes the packet data
-to a FIFO, which can be read with Wireshark (in order to see all
-packets, allowed channels must be limited to use only channel 0).
+flow graph for a basic sniffer. It receives packets on a single
+channel and writes the packet data to a FIFO, which can be read with
+Wireshark (in order to see all packets, allowed channels must be
+limited to use only channel 0).
 
 <img src="docs/screenshots/simple_sniffer_flow_graph.png" alt="Simple Sniffer GRC Flow Graph" width="800"/>
 
@@ -104,6 +105,9 @@ gr-wisun-single-channel-sniffer
 
 Allows sniffing a single Wi-SUN channel. Packets are output in PCAPNG
 format and can directly be parsed with Wireshark.
+
+Note: creating the FIFO beforehand is optional; it will be created
+automatically if necessary.
 
 Example usage - receive packets on channel 7 (EU, channel plan 32, PHY
 type 0, PHY mode 1):

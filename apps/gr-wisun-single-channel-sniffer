@@ -6,7 +6,9 @@
 
 """Sniffer application to receive a single Wi-SUN channel for packet analysis with Wireshark."""
 
+import os
 import signal
+import stat
 import sys
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from collections import OrderedDict
@@ -167,6 +169,14 @@ def main():
             modulation, symbol_rate, modulation_index, _ = WISUN_PHY_MODES_FSK[id_]
             print(f"{id_}   {modulation}       {symbol_rate / 1000:3.0f} kbps     {modulation_index:.1f}")
         sys.exit(0)
+
+    # check if dest_file exists & is a FIFO; create if necessary
+    if os.path.exists(args.dest_file):
+        if not stat.S_ISFIFO(os.stat(args.dest_file).st_mode):
+            sys.stderr.write(f"ERROR: file '{args.dest_file}' exists, but is not a FIFO\n")
+            sys.exit(1)
+    else:
+        os.mkfifo(args.dest_file)
 
     phy_mode_id = (args.phy_type << 4) + args.phy_mode
     try:
