@@ -122,13 +122,17 @@ class RadioConfiguration:
             phy_mode_info = "%d / %d" % self.get_802154_phy_type_mode()
         else:
             phy_mode_info = "(not a valid 802.15.4 PHY mode)"
+        if len(self.channels) <= 10:
+            channels_str = f"{', '.join([str(c) for c in self.channels])}"
+        else:
+            channels_str = f"[{len(self.channels)} channels]"
         return OrderedDict([
             ("Modulation", self.modulation),
             ("Modulation index", f"{self.modulation_index:.1f}"),
             ("Symbol rate", f"{self.symbol_rate / 1000:.1f} kHz"),
             ("Channel 0 center frequency", f"{self.channel_0_center_frequency / 1e6:.1f} MHz"),
             ("Channel spacing", f"{self.channel_spacing / 1000:.1f} kHz"),
-            ("Channels", f"{', '.join([str(c) for c in self.channels])}"),
+            ("Channels", channels_str),
             ("802.15.4 PHY type / mode", phy_mode_info),
         ])
 
