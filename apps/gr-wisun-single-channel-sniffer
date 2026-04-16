@@ -214,7 +214,7 @@ def main():
     sniffer.start()
 
     try:
-        input('Press Enter to quit: ')
+        input('Press Enter to quit:\n')
     except EOFError:
         pass
     sniffer.stop()
