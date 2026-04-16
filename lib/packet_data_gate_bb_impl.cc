@@ -47,7 +47,8 @@ packet_data_gate_bb_impl::packet_data_gate_bb_impl(const std::string length_tag)
       d_packet_rssi_first_tag_discarded(false),
       d_packet_rssi_threshold_warning_done(false),
       d_current_packet_absolute_offset(0),
-      d_packet_rssi(0)
+      d_packet_rssi(0),
+      d_channel(-1)
 {
     /* disable tag propagation (we propagate tags manually to adjust any offset) */
     set_tag_propagation_policy(TPP_DONT);
@@ -135,9 +136,9 @@ int packet_data_gate_bb_impl::general_work(int noutput_items,
                            rssi < d_packet_rssi - phy_relative_rssi_threshold) {
                     /* warn (once per packet) if RSSI below threshold */
                     int low_rssi_offset = t.offset - d_current_packet_absolute_offset;
-                    d_logger->warn("low RSSI during packet data (RSSI: {:f}; "
-                                   "bit offset within packet: {:d})",
-                                   rssi, low_rssi_offset);
+                    d_logger->warn("low RSSI during packet data (channel: {:d}, "
+                                   "RSSI: {:f}, bit offset: {:d})",
+                                   d_channel, rssi, low_rssi_offset);
                     d_packet_rssi_threshold_warning_done = true;
                     gr::block::add_item_tag(0,
                                             t.offset,

@@ -21,4 +21,10 @@ static const char* __doc_gr_wisun_packet_data_gate_bb = R"doc()doc";
 static const char* __doc_gr_wisun_packet_data_gate_bb_packet_data_gate_bb_0 = R"doc()doc";
 
 
+static const char* __doc_gr_wisun_packet_data_gate_bb_packet_data_gate_bb_1 = R"doc()doc";
+
+
 static const char* __doc_gr_wisun_packet_data_gate_bb_make = R"doc()doc";
+
+
+static const char* __doc_gr_wisun_packet_data_gate_bb_set_channel = R"doc()doc";

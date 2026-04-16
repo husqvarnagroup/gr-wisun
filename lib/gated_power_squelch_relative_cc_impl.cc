@@ -36,7 +36,8 @@ gated_power_squelch_relative_cc_impl::gated_power_squelch_relative_cc_impl(
       d_output_active(false),
       d_delay(1 / alpha),
       d_trailing_samples(trailing_samples),
-      d_trailing_samples_left(0)
+      d_trailing_samples_left(0),
+      d_channel(-1)
 {
     set_relative_threshold(relative_threshold);
 }
@@ -91,14 +92,14 @@ int gated_power_squelch_relative_cc_impl::general_work(
 
         if (d_output_active && d_pwr < d_absolute_threshold) {
             d_output_active = false;
-            d_logger->debug("signal lost");
+            d_logger->debug("signal lost (channel {:d})", d_channel);
             d_trailing_samples_left = d_trailing_samples;
             gr::block::add_item_tag(0,
                                     this->nitems_written(0) + noutput_items_created - 1,
                                     pmt::string_to_symbol("squelch_eob"),
                                     pmt::from_double(d_pwr));
         } else if (!d_output_active && d_pwr >= d_absolute_threshold) {
-            d_logger->debug("signal detected");
+            d_logger->debug("signal detected (channel {:d})", d_channel);
             d_output_active = true;
             gr::block::add_item_tag(0,
                                     this->nitems_written(0) + noutput_items_created,
@@ -115,17 +116,20 @@ int gated_power_squelch_relative_cc_impl::general_work(
     }
 
     if (noise_floor_pwr_updated) {
-        d_logger->debug("noise floor power: {:.1f} dB; absolute threshold: {:.1f} dB",
-                        10 * std::log10(d_noise_floor_pwr),
-                        10 * std::log10(d_absolute_threshold));
+        d_logger->debug(
+            "noise floor power (channel {:d}): {:.1f} dB; absolute threshold: {:.1f} dB",
+            d_channel,
+            10 * std::log10(d_noise_floor_pwr),
+            10 * std::log10(d_absolute_threshold));
     }
 
-    d_logger->debug("general_work(noutput_items: {}, ninput_items[0]: {}):\n"
+    d_logger->debug("channel {}: general_work(noutput_items: {}, ninput_items[0]: {}):\n"
                     "- noutput_items_created: {}\n"
                     "- d_output_active: {}\n"
                     "- d_noise_floor_pwr: {:.3e}\n"
                     "- d_absolute_threshold: {:.3e}\n"
                     "- d_pwr: {:.3e}",
+                    d_channel,
                     noutput_items,
                     ninput_items[0],
                     noutput_items_created,

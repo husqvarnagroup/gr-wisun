@@ -43,6 +43,14 @@ public:
      */
     static sptr
     make(const double relative_threshold, const double alpha, const int trailing_samples);
+
+    /*!
+     * \brief Set RX channel.
+     * \param channel RX channel number.
+     *
+     * The channel is used purely for debugging (include current channel in log messages).
+     */
+    virtual void set_channel(int16_t channel) = 0;
 };
 
 } // namespace wisun

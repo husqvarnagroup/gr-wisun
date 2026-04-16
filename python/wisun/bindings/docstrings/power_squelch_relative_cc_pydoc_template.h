@@ -1,6 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2026 Free Software Foundation, Inc.
- * SPDX-FileCopyrightText: 2026 GARDENA GmbH
+ * Copyright 2026 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -23,4 +22,11 @@ static const char* __doc_gr_wisun_power_squelch_relative_cc_power_squelch_relati
     R"doc()doc";
 
 
+static const char* __doc_gr_wisun_power_squelch_relative_cc_power_squelch_relative_cc_1 =
+    R"doc()doc";
+
+
 static const char* __doc_gr_wisun_power_squelch_relative_cc_make = R"doc()doc";
+
+
+static const char* __doc_gr_wisun_power_squelch_relative_cc_set_channel = R"doc()doc";

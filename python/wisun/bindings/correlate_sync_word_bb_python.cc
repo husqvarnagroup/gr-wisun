@@ -1,6 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2026 Free Software Foundation, Inc.
- * SPDX-FileCopyrightText: 2026 GARDENA GmbH
+ * Copyright 2026 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -15,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(correlate_sync_word_bb.h) */
-/* BINDTOOL_HEADER_FILE_HASH(43fe179d87e6cf3c277db392c3fc91b1)                     */
+/* BINDTOOL_HEADER_FILE_HASH(de23e4429fca07abf36ea7fcac9a489c)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -45,6 +44,11 @@ void bind_correlate_sync_word_bb(py::module& m)
              py::arg("sfd"),
              D(correlate_sync_word_bb, make))
 
+
+        .def("set_channel",
+             &correlate_sync_word_bb::set_channel,
+             py::arg("channel"),
+             D(correlate_sync_word_bb, set_channel))
 
         ;
 }

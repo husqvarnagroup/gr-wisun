@@ -1,6 +1,5 @@
 /*
- * SPDX-FileCopyrightText: Copyright 2026 Free Software Foundation, Inc.
- * SPDX-FileCopyrightText: 2026 GARDENA GmbH
+ * Copyright 2026 Free Software Foundation, Inc.
  *
  * This file is part of GNU Radio
  *
@@ -15,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(power_squelch_relative_cc.h) */
-/* BINDTOOL_HEADER_FILE_HASH(9de37e6bd4d7f47ff2a72f37a1725201)                     */
+/* BINDTOOL_HEADER_FILE_HASH(1b2e4ffeb358c00d8f85d953da5368db)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -46,6 +45,11 @@ void bind_power_squelch_relative_cc(py::module& m)
              py::arg("alpha") = 1.0E-4,
              D(power_squelch_relative_cc, make))
 
+
+        .def("set_channel",
+             &power_squelch_relative_cc::set_channel,
+             py::arg("channel"),
+             D(power_squelch_relative_cc, set_channel))
 
         ;
 }
