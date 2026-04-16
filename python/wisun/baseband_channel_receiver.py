@@ -67,6 +67,14 @@ class baseband_channel_receiver(gr.hier_block2):
             block = pdu.pdu_set(pmt_key, pmt_value)
             self.metadata_blocks.append(block)
 
+        # if available, provide channel information to blocks
+        # (this is only relevant for logging)
+        if 'packet-channel-number' in metadata.keys():
+            channel = metadata['packet-channel-number']
+            self.correlate_sync_word_block.set_channel(channel)
+            self.packet_data_gate_block.set_channel(channel)
+            self.power_squelch_block.set_channel(channel)
+
         ##################################################
         # Connections
         ##################################################

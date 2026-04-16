@@ -22,4 +22,11 @@ static const char* __doc_gr_wisun_correlate_sync_word_bb_correlate_sync_word_bb_
     R"doc()doc";
 
 
+static const char* __doc_gr_wisun_correlate_sync_word_bb_correlate_sync_word_bb_1 =
+    R"doc()doc";
+
+
 static const char* __doc_gr_wisun_correlate_sync_word_bb_make = R"doc()doc";
+
+
+static const char* __doc_gr_wisun_correlate_sync_word_bb_set_channel = R"doc()doc";

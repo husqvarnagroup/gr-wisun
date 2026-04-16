@@ -34,7 +34,8 @@ power_squelch_relative_cc_impl::power_squelch_relative_cc_impl(
       d_noise_floor_pwr(1),
       d_iir(alpha),
       d_output_active(false),
-      d_delay(1 / alpha)
+      d_delay(1 / alpha),
+      d_channel(-1)
 {
     set_relative_threshold(relative_threshold);
 }
@@ -98,9 +99,11 @@ int power_squelch_relative_cc_impl::work(int noutput_items,
     }
 
     if (noise_floor_pwr_updated) {
-        d_logger->debug("noise floor power: {:.1f} dB; absolute threshold: {:.1f} dB",
-                        10 * std::log10(d_noise_floor_pwr),
-                        10 * std::log10(d_absolute_threshold));
+        d_logger->debug(
+            "noise floor power (channel {:d}): {:.1f} dB; absolute threshold: {:.1f} dB",
+            d_channel,
+            10 * std::log10(d_noise_floor_pwr),
+            10 * std::log10(d_absolute_threshold));
     }
 
     // Tell runtime system how many output items we produced.

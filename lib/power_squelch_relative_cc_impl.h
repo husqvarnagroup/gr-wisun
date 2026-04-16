@@ -24,18 +24,20 @@ private:
     filter::single_pole_iir<double, double, double> d_iir;
     bool d_output_active;
     int d_delay;
+    int16_t d_channel;
 
 public:
     power_squelch_relative_cc_impl(const double relative_threshold, const double alpha);
     ~power_squelch_relative_cc_impl();
 
+    void set_channel(int16_t channel) override { d_channel = channel; }
     double relative_threshold() const { return 10 * log10(d_relative_threshold); }
     void set_relative_threshold(double db);
 
     // Where all the action really happens
     int work(int noutput_items,
              gr_vector_const_void_star& input_items,
-             gr_vector_void_star& output_items);
+             gr_vector_void_star& output_items) override;
 };
 
 } // namespace wisun

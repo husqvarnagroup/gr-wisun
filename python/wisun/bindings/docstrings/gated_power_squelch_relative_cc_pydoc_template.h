@@ -23,4 +23,13 @@ static const char*
         R"doc()doc";
 
 
+static const char*
+    __doc_gr_wisun_gated_power_squelch_relative_cc_gated_power_squelch_relative_cc_1 =
+        R"doc()doc";
+
+
 static const char* __doc_gr_wisun_gated_power_squelch_relative_cc_make = R"doc()doc";
+
+
+static const char* __doc_gr_wisun_gated_power_squelch_relative_cc_set_channel =
+    R"doc()doc";

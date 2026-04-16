@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(gated_power_squelch_relative_cc.h) */
-/* BINDTOOL_HEADER_FILE_HASH(74241050cdcc7c91c7e93ed1eb20b961)                     */
+/* BINDTOOL_HEADER_FILE_HASH(bdfbf4275957579d5179edb38a8c4d76)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -45,6 +45,11 @@ void bind_gated_power_squelch_relative_cc(py::module& m)
              py::arg("trailing_samples"),
              D(gated_power_squelch_relative_cc, make))
 
+
+        .def("set_channel",
+             &gated_power_squelch_relative_cc::set_channel,
+             py::arg("channel"),
+             D(gated_power_squelch_relative_cc, set_channel))
 
         ;
 }

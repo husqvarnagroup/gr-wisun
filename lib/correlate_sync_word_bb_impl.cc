@@ -35,7 +35,8 @@ correlate_sync_word_bb_impl::correlate_sync_word_bb_impl(uint16_t sfd)
       d_preamble_bit_counter(0),
       d_preamble_last_bit(2),
       d_sfd_data(0),
-      d_phr_data(0)
+      d_phr_data(0),
+      d_channel(-1)
 {
     set_history(sfd_bits + phr_bits + 1);
     declare_sample_delay(history() - 1);
@@ -81,8 +82,10 @@ int correlate_sync_word_bb_impl::work(int noutput_items,
             /* PHR bits 5-15: frame length */
             uint16_t phr_frame_length = d_phr_data & 0x07ff;
 
-            d_logger->notice("packed detected: {:d} bytes (preamble length: {:d} symbols)",
-                             phr_frame_length, d_preamble_bit_counter);
+            d_logger->notice("packed detected (channel {:d}): "
+                             "{:d} bytes (preamble length: {:d} symbols)",
+                             d_channel, phr_frame_length, d_preamble_bit_counter);
+
             if (phr_frame_length == 0) {
                 d_logger->warn("ignoring zero-length packet");
                 break;

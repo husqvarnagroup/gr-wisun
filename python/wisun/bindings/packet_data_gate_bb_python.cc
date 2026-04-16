@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(packet_data_gate_bb.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(3c0811a934c85071350ab1db909a94a5)                     */
+/* BINDTOOL_HEADER_FILE_HASH(1bbd8d60c5fd521f22dfd1b6bac3124c)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -43,6 +43,11 @@ void bind_packet_data_gate_bb(py::module& m)
              py::arg("length_tag"),
              D(packet_data_gate_bb, make))
 
+
+        .def("set_channel",
+             &packet_data_gate_bb::set_channel,
+             py::arg("channel"),
+             D(packet_data_gate_bb, set_channel))
 
         ;
 }
