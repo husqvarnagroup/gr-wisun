@@ -18,7 +18,7 @@ DC_CORRECTION_SYMBOLS = 30  # number of symbols for DC correction estimation; sh
 class baseband_channel_receiver(gr.hier_block2):
     """Block to receive Wi-SUN packets on a single baseband channel (i.e. already filtered and centered to 0 Hz)."""
 
-    def __init__(self, samples_per_symbol, sfd=0b1001000001001110, metadata=None):
+    def __init__(self, samples_per_symbol, sfd=0b1001000001001110, metadata=None, gated_power_squelch=False):
         """Initialize block."""
         gr.hier_block2.__init__(self,
                                 "baseband_channel_receiver",
@@ -33,7 +33,10 @@ class baseband_channel_receiver(gr.hier_block2):
         # Blocks
         ##################################################
         self.rssi_tag_block = wisun.rssi_tag_cc(self._samples_per_symbol * RSSI_TAG_SYMBOLS)
-        self.power_squelch_block = wisun.power_squelch_relative_cc(20, 0.01)
+        if gated_power_squelch:
+            self.power_squelch_block = wisun.gated_power_squelch_relative_cc(20, 0.01, 1000)
+        else:
+            self.power_squelch_block = wisun.power_squelch_relative_cc(20, 0.01)
         self.fm_demod_block = analog.quadrature_demod_cf(1)
         self.dc_correction_block = wisun.tag_based_dc_correction_ff('squelch_sob', 'squelch_eob',
                                                                     self._samples_per_symbol * DC_CORRECTION_SYMBOLS)
