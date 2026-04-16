@@ -46,3 +46,4 @@ GR_ADD_TEST(qa_rssi_tag_cc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_r
 GR_ADD_TEST(qa_power_squelch_relative_cc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_power_squelch_relative_cc.py)
 GR_ADD_TEST(qa_tag_based_dc_correction_ff ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_tag_based_dc_correction_ff.py)
 GR_ADD_TEST(qa_pdu_add_pcapng_header ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_pdu_add_pcapng_header.py)
+GR_ADD_TEST(qa_gated_power_squelch_relative_cc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_gated_power_squelch_relative_cc.py)

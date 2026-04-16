@@ -15,4 +15,5 @@ install(FILES
     wisun_power_squelch_relative_cc.block.yml
     wisun_tag_based_dc_correction_ff.block.yml
     wisun_pdu_add_pcapng_header.block.yml
-    wisun_baseband_channel_receiver.block.yml DESTINATION share/gnuradio/grc/blocks)
+    wisun_baseband_channel_receiver.block.yml
+    wisun_gated_power_squelch_relative_cc.block.yml DESTINATION share/gnuradio/grc/blocks)

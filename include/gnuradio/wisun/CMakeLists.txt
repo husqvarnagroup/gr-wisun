@@ -17,4 +17,5 @@ install(FILES api.h
     rssi_tag_cc.h
     power_squelch_relative_cc.h
     tag_based_dc_correction_ff.h
-    pdu_add_pcapng_header.h DESTINATION include/gnuradio/wisun)
+    pdu_add_pcapng_header.h
+    gated_power_squelch_relative_cc.h DESTINATION include/gnuradio/wisun)
