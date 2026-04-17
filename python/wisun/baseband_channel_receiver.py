@@ -32,11 +32,11 @@ class baseband_channel_receiver(gr.hier_block2):
         ##################################################
         # Blocks
         ##################################################
-        self.rssi_tag_block = wisun.rssi_tag_cc(self._samples_per_symbol * RSSI_TAG_SYMBOLS)
         if gated_power_squelch:
             self.power_squelch_block = wisun.gated_power_squelch_relative_cc(20, 0.01, 1000)
         else:
             self.power_squelch_block = wisun.power_squelch_relative_cc(20, 0.01)
+        self.rssi_tag_block = wisun.rssi_tag_cc(self._samples_per_symbol * RSSI_TAG_SYMBOLS)
         self.fm_demod_block = analog.quadrature_demod_cf(1)
         self.dc_correction_block = wisun.tag_based_dc_correction_ff('squelch_sob', 'squelch_eob',
                                                                     self._samples_per_symbol * DC_CORRECTION_SYMBOLS)
@@ -78,9 +78,9 @@ class baseband_channel_receiver(gr.hier_block2):
         ##################################################
         # Connections
         ##################################################
-        self.connect((self, 0), (self.rssi_tag_block, 0))
-        self.connect((self.rssi_tag_block, 0), (self.power_squelch_block, 0))
-        self.connect((self.power_squelch_block, 0), (self.fm_demod_block, 0))
+        self.connect((self, 0), (self.power_squelch_block, 0))
+        self.connect((self.power_squelch_block, 0), (self.rssi_tag_block, 0))
+        self.connect((self.rssi_tag_block, 0), (self.fm_demod_block, 0))
         self.connect((self.fm_demod_block, 0), (self.dc_correction_block, 0))
         self.connect((self.dc_correction_block, 0), (self.symbol_sync_block, 0))
         self.connect((self.symbol_sync_block, 0), (self.binary_slicer_block, 0))
