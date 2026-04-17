@@ -18,7 +18,7 @@ DC_CORRECTION_SYMBOLS = 30  # number of symbols for DC correction estimation; sh
 class baseband_channel_receiver(gr.hier_block2):
     """Block to receive Wi-SUN packets on a single baseband channel (i.e. already filtered and centered to 0 Hz)."""
 
-    def __init__(self, samples_per_symbol, sfd=0b1001000001001110, metadata=None, gated_power_squelch=False):
+    def __init__(self, samples_per_symbol, sfd=0b1001000001001110, gated_power_squelch=False, metadata=None):
         """Initialize block."""
         gr.hier_block2.__init__(self,
                                 "baseband_channel_receiver",
@@ -69,7 +69,7 @@ class baseband_channel_receiver(gr.hier_block2):
 
         # if available, provide channel information to blocks
         # (this is only relevant for logging)
-        if 'packet-channel-number' in metadata.keys():
+        if metadata is not None and 'packet-channel-number' in metadata.keys():
             channel = metadata['packet-channel-number']
             self.correlate_sync_word_block.set_channel(channel)
             self.packet_data_gate_block.set_channel(channel)

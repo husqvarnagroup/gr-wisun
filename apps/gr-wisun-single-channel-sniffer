@@ -75,7 +75,6 @@ class GrWisunSingleChannelSniffer(gr.top_block):
         ##################################################
         # Blocks
         ##################################################
-
         if device_string is None:
             osmosdr_source = osmosdr.source()
         else:
@@ -87,24 +86,13 @@ class GrWisunSingleChannelSniffer(gr.top_block):
         osmosdr_source.set_if_gain(0, 0)
         osmosdr_source.set_bb_gain(0, 0)
         osmosdr_source.set_bandwidth(0, 0)
-
-        sig_source = analog.sig_source_c(sample_rate, analog.GR_COS_WAVE, -RX_OFFSET_HZ, 1, 0, 0)
-        multiply = blocks.multiply_vcc(1)
-        # Note: The filter width should be a bit smaller than the channel spacing (e.g. 0.9 * channel spacing). Since
-        # the filtering is done on complex baseband, the signal bandwidth must be divided by 2 to get the cutoff
-        # frequency for the low-pass filter (signal is centered around 0, half on negative side, half on positive), so
-        # we could e.g. use 0.45 * channel spacing. However, we have not yet done any frequency correction here and
-        # experimentally, a higher cutoff frequency seems to work better.
-        low_pass_filter = filter.fir_filter_ccf(
-            decimation,
-            firdes.low_pass(
-                1,
-                sample_rate,
-                0.6 * radio_config.channel_spacing,
-                0.2 * radio_config.channel_spacing,
-                window.WIN_HAMMING,
-                6.76))
-        baseband_channel_receiver = wisun.baseband_channel_receiver(samples_per_symbol, metadata=metadata)
+        single_channel_receiver = wisun.single_channel_receiver(sample_rate,
+                                                                frequency_offset=RX_OFFSET_HZ,
+                                                                channel_spacing=radio_config.channel_spacing,
+                                                                decimation=decimation,
+                                                                samples_per_symbol=samples_per_symbol,
+                                                                gated_power_squelch=False,
+                                                                metadata=metadata)
         add_pcap_hdr = wisun.pdu_add_pcapng_header(True, True, True)
         pdu_to_tagged_stream = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         file_sink = blocks.file_sink(gr.sizeof_char*1, dest_file, False)
@@ -113,11 +101,8 @@ class GrWisunSingleChannelSniffer(gr.top_block):
         ##################################################
         # Connections
         ##################################################
-        self.connect((osmosdr_source, 0), (multiply, 0))
-        self.connect((sig_source, 0), (multiply, 1))
-        self.connect((multiply, 0), (low_pass_filter, 0))
-        self.connect((low_pass_filter, 0), (baseband_channel_receiver, 0))
-        self.msg_connect((baseband_channel_receiver, 'pdus'), (add_pcap_hdr, 'pdus'))
+        self.connect((osmosdr_source, 0), (single_channel_receiver, 0))
+        self.msg_connect((single_channel_receiver, 'pdus'), (add_pcap_hdr, 'pdus'))
         self.msg_connect((add_pcap_hdr, 'pdus'), (pdu_to_tagged_stream, 'pdus'))
         self.connect((pdu_to_tagged_stream, 0), (file_sink, 0))
 

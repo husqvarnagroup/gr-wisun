@@ -37,6 +37,18 @@ options:
     state: enabled
 
 blocks:
+- name: channel_spacing
+  id: variable
+  parameters:
+    comment: ''
+    value: '100000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [776, 12.0]
+    rotation: 0
+    state: enabled
 - name: decimation
   id: variable
   parameters:
@@ -121,29 +133,6 @@ blocks:
     coordinate: [544, 12.0]
     rotation: 0
     state: enabled
-- name: analog_sig_source_x_0
-  id: analog_sig_source_x
-  parameters:
-    affinity: ''
-    alias: ''
-    amp: '1'
-    comment: ''
-    freq: -rx_offset
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    offset: '0'
-    phase: '0'
-    samp_rate: samp_rate
-    showports: 'False'
-    type: complex
-    waveform: analog.GR_COS_WAVE
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [104, 648.0]
-    rotation: 0
-    state: enabled
 - name: blocks_file_sink_0_0
   id: blocks_file_sink
   parameters:
@@ -159,49 +148,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1800, 440.0]
-    rotation: 0
-    state: enabled
-- name: blocks_multiply_xx_0
-  id: blocks_multiply_xx
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    num_inputs: '2'
-    type: complex
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [368, 460.0]
-    rotation: 0
-    state: enabled
-- name: low_pass_filter_0
-  id: low_pass_filter
-  parameters:
-    affinity: ''
-    alias: ''
-    beta: '6.76'
-    comment: ''
-    cutoff_freq: 100e3
-    decim: decimation
-    gain: '1'
-    interp: '1'
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    samp_rate: samp_rate
-    type: fir_filter_ccf
-    width: 50e3
-    win: window.WIN_HAMMING
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [504, 408.0]
+    coordinate: [1320, 432.0]
     rotation: 0
     state: enabled
 - name: osmosdr_source_0
@@ -575,24 +522,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1512, 460.0]
-    rotation: 0
-    state: enabled
-- name: wisun_baseband_channel_receiver_1
-  id: wisun_baseband_channel_receiver
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    samples_per_symbol: samp_per_sym
-    sfd: '36942'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [752, 452.0]
+    coordinate: [1032, 452.0]
     rotation: 0
     state: enabled
 - name: wisun_pdu_add_pcapng_header_0
@@ -610,18 +540,36 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1088, 440.0]
+    coordinate: [608, 432.0]
+    rotation: 0
+    state: enabled
+- name: wisun_single_channel_receiver_0
+  id: wisun_single_channel_receiver
+  parameters:
+    affinity: ''
+    alias: ''
+    channel_spacing: channel_spacing
+    comment: ''
+    decimation: decimation
+    frequency_offset: rx_offset
+    gated_power_squelch: 'False'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    sample_rate: samp_rate
+    samples_per_symbol: samp_per_sym
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [344, 400.0]
     rotation: 0
     state: enabled
 
 connections:
-- [analog_sig_source_x_0, '0', blocks_multiply_xx_0, '1']
-- [blocks_multiply_xx_0, '0', low_pass_filter_0, '0']
-- [low_pass_filter_0, '0', wisun_baseband_channel_receiver_1, '0']
-- [osmosdr_source_0, '0', blocks_multiply_xx_0, '0']
+- [osmosdr_source_0, '0', wisun_single_channel_receiver_0, '0']
 - [pdu_pdu_to_tagged_stream_0_0, '0', blocks_file_sink_0_0, '0']
-- [wisun_baseband_channel_receiver_1, pdus, wisun_pdu_add_pcapng_header_0, pdus]
 - [wisun_pdu_add_pcapng_header_0, pdus, pdu_pdu_to_tagged_stream_0_0, pdus]
+- [wisun_single_channel_receiver_0, pdus, wisun_pdu_add_pcapng_header_0, pdus]
 
 metadata:
   file_format: 1

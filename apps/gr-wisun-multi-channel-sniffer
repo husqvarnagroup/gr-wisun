@@ -149,8 +149,8 @@ class GrWisunSingleChannelSniffer(gr.top_block):
             if in_use:
                 metadata["packet-channel-number"] = actual_channel
                 baseband_channel_receiver = wisun.baseband_channel_receiver(samples_per_symbol,
-                                                                            metadata=metadata,
-                                                                            gated_power_squelch=True)
+                                                                            gated_power_squelch=True,
+                                                                            metadata=metadata)
                 add_pcap_hdr = wisun.pdu_add_pcapng_header(True, True, True)
                 self.connect((pfb_channelizer, pfb_channel), (baseband_channel_receiver, 0))
                 self.msg_connect((baseband_channel_receiver, 'pdus'), (add_pcap_hdr, 'pdus'))
