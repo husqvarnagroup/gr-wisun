@@ -1330,7 +1330,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [816, 228.0]
+    coordinate: [584, 268.0]
     rotation: 0
     state: enabled
 - name: wisun_rssi_tag_cc_0
@@ -1346,7 +1346,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [640, 236.0]
+    coordinate: [856, 276.0]
     rotation: 0
     state: enabled
 - name: wisun_tag_based_dc_correction_ff_0
@@ -1381,7 +1381,7 @@ connections:
 - [digital_symbol_sync_xx_0, '0', digital_binary_slicer_fb_0, '0']
 - [digital_symbol_sync_xx_0, '0', qtgui_time_sink_x_1, '0']
 - [low_pass_filter_0, '0', qtgui_sink_x_1, '0']
-- [low_pass_filter_0, '0', wisun_rssi_tag_cc_0, '0']
+- [low_pass_filter_0, '0', wisun_power_squelch_relative_cc_0, '0']
 - [osmosdr_source_0, '0', blocks_multiply_xx_0, '0']
 - [osmosdr_source_0, '0', qtgui_sink_x_0, '0']
 - [pdu_pdu_to_tagged_stream_0_0, '0', blocks_file_sink_0_0, '0']
@@ -1393,8 +1393,8 @@ connections:
 - [wisun_packet_data_gate_bb_0, '0', wisun_data_whitening_bb_0, '0']
 - [wisun_pdu_add_pcapng_header_0, pdus, blocks_message_debug_1_0, print]
 - [wisun_pdu_add_pcapng_header_0, pdus, pdu_pdu_to_tagged_stream_0_0, pdus]
-- [wisun_power_squelch_relative_cc_0, '0', analog_quadrature_demod_cf_0, '0']
-- [wisun_rssi_tag_cc_0, '0', wisun_power_squelch_relative_cc_0, '0']
+- [wisun_power_squelch_relative_cc_0, '0', wisun_rssi_tag_cc_0, '0']
+- [wisun_rssi_tag_cc_0, '0', analog_quadrature_demod_cf_0, '0']
 - [wisun_tag_based_dc_correction_ff_0, '0', digital_symbol_sync_xx_0, '0']
 - [wisun_tag_based_dc_correction_ff_0, '0', qtgui_time_sink_x_0, '0']
 
