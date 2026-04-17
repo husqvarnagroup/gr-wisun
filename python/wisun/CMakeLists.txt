@@ -23,7 +23,8 @@ gr_python_install(FILES __init__.py
     baseband_channel_receiver.py
     configuration.py
     parameters.py
-    util.py DESTINATION ${GR_PYTHON_DIR}/gnuradio/wisun)
+    util.py
+    single_channel_receiver.py DESTINATION ${GR_PYTHON_DIR}/gnuradio/wisun)
 
 ########################################################################
 # Handle the unit tests
