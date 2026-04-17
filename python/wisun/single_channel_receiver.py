@@ -42,7 +42,7 @@ class single_channel_receiver(gr.hier_block2):
         # frequency for the low-pass filter (signal is centered around 0, half on negative side, half on positive), so
         # we could e.g. use 0.45 * channel spacing. However, we have not yet done any frequency correction here and
         # experimentally, a higher cutoff frequency seems to work better.
-        CHANNEL_FILTER_WIDTH = 0.6
+        CHANNEL_FILTER_WIDTH = 0.5
         CHANNEL_FILTER_TRANSITION = 0.2
         low_pass_filter = filter.fir_filter_ccf(
             decimation,
