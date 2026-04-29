@@ -47,7 +47,7 @@ class baseband_channel_receiver(gr.hier_block2):
             0.045,
             1,
             1.0,
-            1.5,
+            0.05,  # maximum deviation
             1,
             digital.constellation_bpsk().base(),
             digital.IR_MMSE_8TAP,
