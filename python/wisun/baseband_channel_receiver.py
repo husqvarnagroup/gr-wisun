@@ -40,6 +40,7 @@ class baseband_channel_receiver(gr.hier_block2):
         self.fm_demod_block = analog.quadrature_demod_cf(1)
         self.dc_correction_block = wisun.tag_based_dc_correction_ff('squelch_sob', 'squelch_eob',
                                                                     self._samples_per_symbol * DC_CORRECTION_SYMBOLS)
+        self.agc_block = analog.agc_ff(1e-4, 1.0, 1.0, 1.5)
         self.symbol_sync_block = digital.symbol_sync_ff(
             digital.TED_ZERO_CROSSING,
             self._samples_per_symbol,
@@ -82,7 +83,8 @@ class baseband_channel_receiver(gr.hier_block2):
         self.connect((self.power_squelch_block, 0), (self.rssi_tag_block, 0))
         self.connect((self.rssi_tag_block, 0), (self.fm_demod_block, 0))
         self.connect((self.fm_demod_block, 0), (self.dc_correction_block, 0))
-        self.connect((self.dc_correction_block, 0), (self.symbol_sync_block, 0))
+        self.connect((self.dc_correction_block, 0), (self.agc_block, 0))
+        self.connect((self.agc_block, 0), (self.symbol_sync_block, 0))
         self.connect((self.symbol_sync_block, 0), (self.binary_slicer_block, 0))
         self.connect((self.binary_slicer_block, 0), (self.correlate_sync_word_block, 0))
         self.connect((self.correlate_sync_word_block, 0), (self.packet_data_gate_block, 0))
