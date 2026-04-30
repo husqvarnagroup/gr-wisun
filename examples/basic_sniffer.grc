@@ -53,7 +53,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: 50e3
+    value: 100e3
   states:
     bus_sink: false
     bus_source: false
@@ -142,6 +142,26 @@ blocks:
     coordinate: [496, 12.0]
     rotation: 0
     state: enabled
+- name: analog_agc_xx_0
+  id: analog_agc_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    gain: '1.0'
+    max_gain: '1.5'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    rate: 1e-4
+    reference: '1.0'
+    type: float
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1312, 228.0]
+    rotation: 0
+    state: enabled
 - name: analog_pwr_squelch_xx_1
   id: analog_pwr_squelch_xx
   parameters:
@@ -175,7 +195,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1024, 340.0]
+    coordinate: [784, 308.0]
     rotation: 0
     state: enabled
 - name: analog_sig_source_x_0
@@ -346,7 +366,7 @@ blocks:
     constellation: digital.constellation_bpsk().base()
     damping: '1'
     loop_bw: '0.045'
-    max_dev: '1.5'
+    max_dev: '0.05'
     maxoutbuf: '0'
     minoutbuf: '0'
     nfilters: '128'
@@ -379,7 +399,7 @@ blocks:
     minoutbuf: '0'
     samp_rate: samp_rate
     type: fir_filter_ccf
-    width: 50e3
+    width: 60e3
     win: window.WIN_HAMMING
   states:
     bus_sink: false
@@ -1330,7 +1350,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [584, 268.0]
+    coordinate: [472, 204.0]
     rotation: 0
     state: enabled
 - name: wisun_rssi_tag_cc_0
@@ -1346,7 +1366,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [856, 276.0]
+    coordinate: [760, 212.0]
     rotation: 0
     state: enabled
 - name: wisun_tag_based_dc_correction_ff_0
@@ -1364,11 +1384,13 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1232, 320.0]
+    coordinate: [1008, 288.0]
     rotation: 0
     state: enabled
 
 connections:
+- [analog_agc_xx_0, '0', digital_symbol_sync_xx_0, '0']
+- [analog_agc_xx_0, '0', qtgui_time_sink_x_0, '0']
 - [analog_pwr_squelch_xx_1, '0', qtgui_histogram_sink_x_1, '0']
 - [analog_quadrature_demod_cf_0, '0', wisun_tag_based_dc_correction_ff_0, '0']
 - [analog_sig_source_x_0, '0', blocks_multiply_xx_0, '1']
@@ -1395,8 +1417,7 @@ connections:
 - [wisun_pdu_add_pcapng_header_0, pdus, pdu_pdu_to_tagged_stream_0_0, pdus]
 - [wisun_power_squelch_relative_cc_0, '0', wisun_rssi_tag_cc_0, '0']
 - [wisun_rssi_tag_cc_0, '0', analog_quadrature_demod_cf_0, '0']
-- [wisun_tag_based_dc_correction_ff_0, '0', digital_symbol_sync_xx_0, '0']
-- [wisun_tag_based_dc_correction_ff_0, '0', qtgui_time_sink_x_0, '0']
+- [wisun_tag_based_dc_correction_ff_0, '0', analog_agc_xx_0, '0']
 
 metadata:
   file_format: 1
