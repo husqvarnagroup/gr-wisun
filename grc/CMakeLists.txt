@@ -17,4 +17,5 @@ install(FILES
     wisun_pdu_add_pcapng_header.block.yml
     wisun_baseband_channel_receiver.block.yml
     wisun_gated_power_squelch_relative_cc.block.yml
-    wisun_single_channel_receiver.block.yml DESTINATION share/gnuradio/grc/blocks)
+    wisun_single_channel_receiver.block.yml
+    wisun_multi_channel_receiver.block.yml DESTINATION share/gnuradio/grc/blocks)

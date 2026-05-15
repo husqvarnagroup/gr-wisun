@@ -24,7 +24,8 @@ gr_python_install(FILES __init__.py
     configuration.py
     parameters.py
     util.py
-    single_channel_receiver.py DESTINATION ${GR_PYTHON_DIR}/gnuradio/wisun)
+    single_channel_receiver.py
+    multi_channel_receiver.py DESTINATION ${GR_PYTHON_DIR}/gnuradio/wisun)
 
 ########################################################################
 # Handle the unit tests
