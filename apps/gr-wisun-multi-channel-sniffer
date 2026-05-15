@@ -15,8 +15,6 @@ from collections import OrderedDict
 
 import osmosdr
 from gnuradio import blocks, gr, pdu, wisun
-from gnuradio.fft import window
-from gnuradio.filter import firdes, pfb
 from gnuradio.wisun.configuration import (InvalidWiSunChannelPlanException, InvalidWiSunParametersException,
                                           InvalidWiSunPhyModeException, InvalidWiSunPhyTypeException,
                                           InvalidWiSunRegulatoryDomainException, UnsupportedWiSunChannelException,
@@ -61,28 +59,16 @@ class GrWisunMultiChannelSniffer(gr.top_block):
         middle = int(lowest + n_channels / 2 - 1)
         center_frequency = radio_config.channel_frequency(middle)
         sample_rate = n_channels * radio_config.channel_spacing
-        oversampling = 1
-        samples_per_symbol = sample_rate / n_channels / radio_config.symbol_rate * oversampling
-        if samples_per_symbol != int(samples_per_symbol):
-            sys.stderr.write(f"ERROR: samples per symbol is not an integer: {samples_per_symbol}\n")
-            sys.exit(1)
-        samples_per_symbol = int(samples_per_symbol)
-        filter_bandwidth = radio_config.channel_spacing / 2 * 0.8
-        filter_transition = radio_config.channel_spacing / 2 * 0.2
         print("Receiver configuration:")
         tabular_pretty_print(OrderedDict([
             ("Sample rate", f"{sample_rate / 1e6:.1f} MHz"),
             ("Frequency", f"{center_frequency / 1e6:.1f} MHz"),
-            ("Oversampling", f"{oversampling}"),
-            ("Samples per symbol", f"{samples_per_symbol}"),
             ("Gain", f"{gain}"),
             ("Number of PFB channels", f"{n_channels}"),
             ("Active channels", f"{n_active_channels}"),
             ("Lowest channel", f"{lowest}"),
             ("Middle channel", f"{middle}"),
             ("Highest channel", f"{highest}"),
-            ("PFB channel filter bandwidth", f"{filter_bandwidth/1e3:.1f} kHz"),
-            ("PFB channel filter transition", f"{filter_transition/1e3:.1f} kHz"),
         ]))
 
         metadata = {
@@ -96,7 +82,7 @@ class GrWisunMultiChannelSniffer(gr.top_block):
             metadata['packet-phy-mode'] = phy_mode
 
         ##################################################
-        # Blocks (without individual streams)
+        # Blocks
         ##################################################
         if device_string is None:
             osmosdr_source = osmosdr.source()
@@ -110,54 +96,23 @@ class GrWisunMultiChannelSniffer(gr.top_block):
         osmosdr_source.set_bb_gain(0, 0)
         osmosdr_source.set_bandwidth(0, 0)
 
-        pfb_channelizer = pfb.channelizer_ccf(
-            numchans=n_channels,
-            taps=firdes.low_pass(
-                1,
-                sample_rate,
-                filter_bandwidth,
-                filter_transition,
-                window.WIN_HAMMING,
-                6.76),
-            oversample_rate=oversampling,
-            atten=100
-        )
+        multi_channel_receiver = wisun.multi_channel_receiver(sample_rate,
+                                                              center_frequency,
+                                                              radio_config.channel_0_center_frequency,
+                                                              radio_config.channel_spacing,
+                                                              radio_config.symbol_rate,
+                                                              radio_config.channels)
 
         pdu_to_tagged_stream = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         file_sink = blocks.file_sink(gr.sizeof_char*1, dest_file, False)
         file_sink.set_unbuffered(True)
 
         ##################################################
-        # Connections (without individual streams)
+        # Connections
         ##################################################
-        self.connect((osmosdr_source, 0), (pfb_channelizer, 0))
+        self.connect((osmosdr_source, 0), (multi_channel_receiver, 0))
+        self.msg_connect((multi_channel_receiver, 'pdus'), (pdu_to_tagged_stream, 'pdus'))
         self.connect((pdu_to_tagged_stream, 0), (file_sink, 0))
-
-        ##################################################
-        # Per-channel blocks & connections
-        ##################################################
-        for pfb_channel in range(n_channels):
-            if pfb_channel <= n_channels / 2:
-                actual_channel = middle + pfb_channel
-            else:
-                offset = n_channels // 2 + 1
-                actual_channel = lowest + pfb_channel - offset
-            in_use = actual_channel in radio_config.channels
-            print(f"PFB channel {pfb_channel:2}/{n_channels} is channel {actual_channel:2} " +
-                  f"({radio_config.channel_frequency(actual_channel)/1e6:.1f} MHz): " +
-                  ("active -> setting up channel receiver" if in_use else "disabled -> connecting to null sink"))
-            if in_use:
-                metadata["packet-channel-number"] = actual_channel
-                baseband_channel_receiver = wisun.baseband_channel_receiver(samples_per_symbol,
-                                                                            gated_power_squelch=True,
-                                                                            metadata=metadata)
-                add_pcap_hdr = wisun.pdu_add_pcapng_header(True, True, True)
-                self.connect((pfb_channelizer, pfb_channel), (baseband_channel_receiver, 0))
-                self.msg_connect((baseband_channel_receiver, 'pdus'), (add_pcap_hdr, 'pdus'))
-                self.msg_connect((add_pcap_hdr, 'pdus'), (pdu_to_tagged_stream, 'pdus'))
-            else:
-                null_sink = blocks.null_sink(gr.sizeof_gr_complex)
-                self.connect((pfb_channelizer, pfb_channel), null_sink)
 
 
 def main():
