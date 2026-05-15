@@ -27,8 +27,8 @@ from gnuradio.wisun.parameters import (SUN_FSK_CHANNEL_PAGE, WISUN_CHANNEL_PLANS
 from gnuradio.wisun.util import tabular_pretty_print
 
 
-class GrWisunSingleChannelSniffer(gr.top_block):
-    """Single channel sniffer main class."""
+class GrWisunMultiChannelSniffer(gr.top_block):
+    """Multi channel sniffer main class."""
 
     def __init__(self, device_string, gain, dest_file, wisun_config):
         gr.top_block.__init__(self)
@@ -161,7 +161,7 @@ class GrWisunSingleChannelSniffer(gr.top_block):
 
 
 def main():
-    parser = ArgumentParser(description="Single channel Wi-SUN sniffer.", formatter_class=ArgumentDefaultsHelpFormatter)
+    parser = ArgumentParser(description="Multi channel Wi-SUN sniffer.", formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument('--device', type=str, default=None,
                         help="OsmoSDR device string (leave empty if only one SDR connected)")
     parser.add_argument('--gain', type=int, default=30, help="SDR hardware RX gain [dB]")
@@ -244,7 +244,7 @@ def main():
         sys.stderr.write("ERROR: OFDM modes are not (yet) supported.\n")
         sys.exit(1)
 
-    sniffer = GrWisunSingleChannelSniffer(args.device, args.gain, args.dest_file, config)
+    sniffer = GrWisunMultiChannelSniffer(args.device, args.gain, args.dest_file, config)
 
     def sig_handler(sig=None, frame=None):
         sniffer.stop()
