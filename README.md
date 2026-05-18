@@ -134,7 +134,8 @@ gr-wisun-multi-channel-sniffer
 Allows sniffing multiple or all Wi-SUN channels of a given channel
 plan.
 
-Note: this is currently very CPU-heavy.
+Note: this is currently quite CPU-heavy (CPU is used mainly for the
+poly-phase filter bank).
 
 Example usage - receive all channels for EU channel plan 33 with PHY
 type 0 (FSK without FEC) and PHY mode 3 (2-FSK, 100 kbps, modulation
@@ -149,3 +150,20 @@ In a separate terminal:
 ```
 wireshark -k -i /tmp/gr-wisun-sniffer
 ```
+
+gr-wisun-multi-channel-sniffer-gui
+----------------------------------
+
+This application does the same signal processing as
+`gr-wisun-multi-channel-sniffer`, but adds a GUI with a real-time FFT
+and a waterfall plot of the incoming signal, as well as a slider to
+adjust the source gain.
+
+The application has the same usage as `gr-wisun-multi-channel-sniffer`
+(Wireshark must be started in a separate terminal). An additional
+command line parameter, `--update-rate`, allows controlling the FFT &
+waterfall update rate.
+
+The following screenshot shows a train of PAN advertisements in the
+waterfall plot:
+<img src="docs/screenshots/sniffer_gui.png" alt="Sniffer GUI" width="800"/>

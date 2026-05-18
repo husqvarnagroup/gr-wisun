@@ -11,4 +11,5 @@ include(GrPython)
 gr_python_install(PROGRAMS
   gr-wisun-single-channel-sniffer
   gr-wisun-multi-channel-sniffer
+  gr-wisun-multi-channel-sniffer-gui
   DESTINATION bin)

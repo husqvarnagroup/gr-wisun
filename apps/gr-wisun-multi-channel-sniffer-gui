@@ -1,0 +1,298 @@
+#!/usr/bin/env python3
+# coding: utf-8
+#
+# Copyright (c) 2026 Gardena GmbH
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""GUI sniffer application to receive a multiple Wi-SUN channels for packet analysis with Wireshark."""
+
+import os
+import signal
+import stat
+import sys
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+from collections import OrderedDict
+
+from PyQt5 import Qt, QtCore
+import sip
+
+import osmosdr
+from gnuradio import blocks, gr, pdu, qtgui, wisun
+from gnuradio.fft import window
+from gnuradio.wisun.configuration import (InvalidWiSunChannelPlanException, InvalidWiSunParametersException,
+                                          InvalidWiSunPhyModeException, InvalidWiSunPhyTypeException,
+                                          InvalidWiSunRegulatoryDomainException, UnsupportedWiSunChannelException,
+                                          UnsupportedWiSunPhyModeIdException, WiSunConfiguration)
+from gnuradio.wisun.parameters import (SUN_FSK_CHANNEL_PAGE, WISUN_CHANNEL_PLANS, WISUN_COUNTRY_CODES,
+                                       WISUN_FREQUENCY_BAND_802154_MAPPING, WISUN_FREQUENCY_BANDS, WISUN_PHY_MODES_FSK,
+                                       WISUN_PHY_TYPES)
+from gnuradio.wisun.util import tabular_pretty_print
+
+FFT_SIZE = 4096
+
+
+class GrWisunMultiChannelSniffer(gr.top_block, Qt.QWidget):
+    """Multi channel sniffer main class with GUI (adapted from multi_channel_sniffer_gui example)."""
+
+    def __init__(self, device_string, gain, dest_file, wisun_config, update_rate):
+        gr.top_block.__init__(self, "Multi-Channel Wi-SUN FSK Sniffer", catch_exceptions=True)
+        radio_config = wisun_config.radio_configuration()
+
+        Qt.QWidget.__init__(self)
+        self.setWindowTitle("Multi-Channel Wi-SUN FSK Sniffer")
+        try:
+            self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
+        except BaseException as exc:
+            print(f"Qt GUI: Could not set Icon: {str(exc)}", file=sys.stderr)
+        self._layout_top = Qt.QVBoxLayout()
+        self.setLayout(self._layout_top)
+        self._scroll_area = Qt.QScrollArea()
+        self._layout_top.addWidget(self._scroll_area)
+        self._scroll_area.setWidgetResizable(True)
+        self._top_widget = Qt.QWidget()
+        self._scroll_area.setWidget(self._top_widget)
+        self._layout_main_area = Qt.QVBoxLayout(self._top_widget)
+        self._settings = Qt.QSettings("gnuradio/flowgraphs", "gr_wisun_multi_channel_sniffer_gui")
+        try:
+            geometry = self._settings.value("geometry")
+            if geometry:
+                self.restoreGeometry(geometry)
+        except BaseException as exc:
+            print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
+
+        ##################################################
+        # Variables
+        ##################################################
+
+        # Determine sample rate, number of channels & center frequency
+        #
+        # The strategy for this is as follows:
+        # - determine highest & lowest channel
+        # - add one channel at the top as channelizer will split one channel at the edge of the band
+        # - determine number of channels (highest - lowest + 1)
+        # - add one channel at the bottom if channel number is odd (we want an even number of channels)
+        # - use lower middle channel for center frequency as we always have a buffer at the top, but not at the bottom
+        # - calculate sample rate as number of channels * spacing
+        #
+        # See also https://wiki.gnuradio.org/index.php/Polyphase_Channelizer
+
+        highest = max(radio_config.channels)
+        lowest = min(radio_config.channels)
+        highest += 1
+        n_channels = highest - lowest + 1
+        n_active_channels = len(radio_config.channels)
+        if n_channels % 2 != 0:
+            lowest -= 1
+            n_channels += 1
+        middle = int(lowest + n_channels / 2 - 1)
+        center_frequency = radio_config.channel_frequency(middle)
+        sample_rate = n_channels * radio_config.channel_spacing
+        print("Receiver configuration:")
+        tabular_pretty_print(OrderedDict([
+            ("Sample rate", f"{sample_rate / 1e6:.1f} MHz"),
+            ("Frequency", f"{center_frequency / 1e6:.1f} MHz"),
+            ("Gain", f"{gain}"),
+            ("Number of PFB channels", f"{n_channels}"),
+            ("Active channels", f"{n_active_channels}"),
+            ("Lowest channel", f"{lowest}"),
+            ("Middle channel", f"{middle}"),
+            ("Highest channel", f"{highest}"),
+        ]))
+
+        metadata = {
+            "packet-bit-rate": radio_config.data_rate(),
+            "packet-channel-page": SUN_FSK_CHANNEL_PAGE,
+            "packet-phy-band": WISUN_FREQUENCY_BAND_802154_MAPPING[wisun_config.channel_plan_id],
+        }
+        if radio_config.is_valid_802154_phy_mode():
+            phy_type, phy_mode = radio_config.get_802154_phy_type_mode()
+            metadata['packet-phy-type'] = phy_type
+            metadata['packet-phy-mode'] = phy_mode
+
+        ##################################################
+        # Blocks
+        ##################################################
+        if device_string is None:
+            self._osmosdr_source = osmosdr.source()
+        else:
+            self._osmosdr_source = osmosdr.source(device_string)
+        self._osmosdr_source.set_sample_rate(sample_rate)
+        self._osmosdr_source.set_center_freq(center_frequency, 0)
+        self._osmosdr_source.set_gain_mode(False, 0)
+        self._osmosdr_source.set_gain(gain, 0)
+        self._osmosdr_source.set_if_gain(0, 0)
+        self._osmosdr_source.set_bb_gain(0, 0)
+        self._osmosdr_source.set_bandwidth(0, 0)
+
+        multi_channel_receiver = wisun.multi_channel_receiver(sample_rate,
+                                                              center_frequency,
+                                                              radio_config.channel_0_center_frequency,
+                                                              radio_config.channel_spacing,
+                                                              radio_config.symbol_rate,
+                                                              radio_config.channels)
+
+        pdu_to_tagged_stream = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
+        file_sink = blocks.file_sink(gr.sizeof_char*1, dest_file, False)
+        file_sink.set_unbuffered(True)
+
+        ##################################################
+        # Connections
+        ##################################################
+        self.connect((self._osmosdr_source, 0), (multi_channel_receiver, 0))
+        self.msg_connect((multi_channel_receiver, 'pdus'), (pdu_to_tagged_stream, 'pdus'))
+        self.connect((pdu_to_tagged_stream, 0), (file_sink, 0))
+
+        ##################################################
+        # GUI Elements & Connections
+        ##################################################
+        gain_range = qtgui.Range(0, 70, 1, 10, 200)
+        gain_slider = qtgui.RangeWidget(gain_range, self.set_gain, "Source Gain", "counter_slider", float,
+                                        QtCore.Qt.Horizontal)
+        self._layout_main_area.addWidget(gain_slider)
+
+        spectrum_sink = qtgui.freq_sink_c(
+            FFT_SIZE,
+            window.WIN_BLACKMAN_HARRIS,
+            center_frequency,
+            sample_rate,
+            "OsmoSDR Source Signal FFT")
+        spectrum_sink.set_update_time(update_rate)
+        spectrum_sink.set_y_axis(-140, -20)
+        spectrum_sink.set_y_label('Relative Gain', 'dB')
+        spectrum_sink.enable_autoscale(False)
+        spectrum_sink.enable_grid(True)
+        spectrum_sink.enable_axis_labels(True)
+        spectrum_sink.enable_control_panel(True)
+        spectrum_sink_wrapped = sip.wrapinstance(spectrum_sink.qwidget(), Qt.QWidget)
+        self._layout_main_area.addWidget(spectrum_sink_wrapped)
+        self.connect((self._osmosdr_source, 0), (spectrum_sink, 0))
+
+        waterfall_sink = qtgui.waterfall_sink_c(
+            FFT_SIZE,
+            window.WIN_BLACKMAN_HARRIS,
+            center_frequency,
+            sample_rate,
+            "OsmoSDR Source Signal Waterfall")
+        waterfall_sink.set_update_time(update_rate)
+        waterfall_sink.enable_axis_labels(True)
+        waterfall_sink_wrapped = sip.wrapinstance(waterfall_sink.qwidget(), Qt.QWidget)
+        self._layout_main_area.addWidget(waterfall_sink_wrapped)
+        self.connect((self._osmosdr_source, 0), (waterfall_sink, 0))
+
+    def closeEvent(self, event):
+        self._settings = Qt.QSettings("gnuradio/flowgraphs", "gr_wisun_multi_channel_sniffer_gui")
+        self._settings.setValue("geometry", self.saveGeometry())
+        self.stop()
+        self.wait()
+
+        event.accept()
+
+    def set_gain(self, gain):
+        self._osmosdr_source.set_gain(gain, 0)
+
+
+def main():
+    parser = ArgumentParser(description="Multi channel Wi-SUN sniffer.", formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--device', type=str, default=None,
+                        help="OsmoSDR device string (leave empty if only one SDR connected)")
+    parser.add_argument('--gain', type=int, default=30, help="SDR hardware RX gain [dB]")
+    parser.add_argument('--dest-file', type=str, default="/tmp/gr-wisun-sniffer", help="Output file (FIFO)")
+    parser.add_argument('-r', '--regulatory-domain', type=str, default="EU", help="Wi-SUN regulatory domain")
+    parser.add_argument('-p', '--channel-plan', type=int, default=32, help="Wi-SUN channel plan ID")
+    parser.add_argument('-t', '--phy-type', type=int, default=0, help="Wi-SUN PHY type")
+    parser.add_argument('-m', '--phy-mode', type=int, default=1, help="Wi-SUN PHY mode")
+    parser.add_argument('-c', '--channels', type=str, default="",
+                        help="Wi-SUN channels to receive; empty: all channels")
+    parser.add_argument('--list-regulatory-domains', action="store_true",
+                        help="List Wi-SUN regulatory domains & exit")
+    parser.add_argument('--list-channel-plans', action="store_true",
+                        help="List Wi-SUN channel plans & exit")
+    parser.add_argument('--list-phy-types', action="store_true",
+                        help="List Wi-SUN PHY types (first 4 bits of PHY mode ID) & exit")
+    parser.add_argument('--list-phy-modes', action="store_true",
+                        help="List Wi-SUN PHY modes for FSK (second 4 bits of PHY mode ID) & exit")
+    parser.add_argument('-R', '--update-rate', type=float, default=0.01,
+                        help="Update time [s] for FFT & waterfall sink.")
+    args, argv = parser.parse_known_args()
+
+    if args.list_regulatory_domains:
+        for country in sorted(WISUN_COUNTRY_CODES.keys()):
+            print(f"{country}: {WISUN_COUNTRY_CODES[country]}")
+        sys.exit(0)
+
+    if args.list_channel_plans:
+        print("ID\tName\t\tFrequency band\t\tChannel spacing")
+        print('-'*80)
+        for id_ in sorted(WISUN_CHANNEL_PLANS.keys()):
+            name, spacing, f0_center_freq = WISUN_CHANNEL_PLANS[id_]
+            band = WISUN_FREQUENCY_BANDS[id_]
+            print(f"{id_}\t{name}\t{band[0]:.1f} - {band[1]:.1f} MHz\t{spacing / 1000:.0f} kHz")
+        sys.exit(0)
+
+    if args.list_phy_types:
+        for id_ in sorted(WISUN_PHY_TYPES.keys()):
+            print(f"{id_}: {WISUN_PHY_TYPES[id_]}")
+        sys.exit(0)
+
+    if args.list_phy_modes:
+        print("ID  Modulation  Symbol rate  Modulation Index")
+        print("-"*80)
+        for id_ in sorted(WISUN_PHY_MODES_FSK.keys()):
+            modulation, symbol_rate, modulation_index, _ = WISUN_PHY_MODES_FSK[id_]
+            print(f"{id_}   {modulation}       {symbol_rate / 1000:3.0f} kbps     {modulation_index:.1f}")
+        sys.exit(0)
+
+    # check if dest_file exists & is a FIFO; create if necessary
+    if os.path.exists(args.dest_file):
+        if not stat.S_ISFIFO(os.stat(args.dest_file).st_mode):
+            sys.stderr.write(f"ERROR: file '{args.dest_file}' exists, but is not a FIFO\n")
+            sys.exit(1)
+    else:
+        os.mkfifo(args.dest_file)
+
+    phy_mode_id = (args.phy_type << 4) + args.phy_mode
+    if len(args.channels) == 0:
+        channels = []
+    else:
+        channels = [int(x) for x in args.channels.split(',')]
+
+    try:
+        config = WiSunConfiguration(regulatory_domain=args.regulatory_domain,
+                                    channel_plan_id=args.channel_plan,
+                                    phy_mode_id=phy_mode_id,
+                                    allowed_channels=channels)
+    except (InvalidWiSunChannelPlanException, InvalidWiSunParametersException,
+            InvalidWiSunPhyModeException, InvalidWiSunPhyTypeException,
+            InvalidWiSunRegulatoryDomainException, UnsupportedWiSunChannelException,
+            UnsupportedWiSunPhyModeIdException) as e:
+        sys.stderr.write(f"ERROR: {e}\n")
+        sys.exit(1)
+
+    print("WiSUN configuration:")
+    tabular_pretty_print(config.info())
+    print("Radio configuration:")
+    tabular_pretty_print(config.radio_configuration().info())
+
+    if config.is_ofdm():
+        sys.stderr.write("ERROR: OFDM modes are not (yet) supported.\n")
+        sys.exit(1)
+
+    qapp = Qt.QApplication(argv)
+    sniffer = GrWisunMultiChannelSniffer(args.device, args.gain, args.dest_file, config, args.update_rate)
+
+    def sig_handler(sig=None, frame=None):
+        sniffer.stop()
+        sniffer.wait()
+
+        Qt.QApplication.quit()
+
+    signal.signal(signal.SIGINT, sig_handler)
+    signal.signal(signal.SIGTERM, sig_handler)
+
+    sniffer.start()
+    sniffer.show()
+    qapp.exec_()
+
+
+if __name__ == '__main__':
+    main()
