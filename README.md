@@ -167,3 +167,40 @@ waterfall update rate.
 The following screenshot shows a train of PAN advertisements in the
 waterfall plot:
 <img src="docs/screenshots/sniffer_gui.png" alt="Sniffer GUI" width="800"/>
+
+
+gr-wisun-multi-mode-multi-channel-sniffer
+-----------------------------------------
+
+This application allows setting up multiple multi-channel sniffers to
+sniff packets with different Wi-SUN modes (different channel plan ID,
+PHY type & PHY mode, but only one regulatory domain) simultaneously.
+
+The sample rate and center frequency of the receiver must be specify
+and must satisfy the following conditions for all specified modes:
+
+- sample rate must be an integer multiple of channel spacing
+- center frequency offset from channel 0 center frequency must be a
+  multiple of the channel spacing
+- center frequency & sample rate must must be chosen so that frequency
+  band covers all channels
+
+Example use to receive two Wi-SUN modes in the 868 MHz band:
+
+```
+gr-wisun-multi-mode-multi-channel-sniffer -s 8e6 -f 866.1e6 -r EU  -m 32,0,1 -m 33,0,3
+```
+
+In a separate terminal:
+
+```
+wireshark -k -i /tmp/gr-wisun-sniffer
+```
+
+This is currently mostly a proof-of-concept. It requires a significant
+amount of CPU power, as each mode gets its one poly-phase filter bank
+(channelizer) with a dedicated base-band receiver block for each
+active channel. For illustration, the following picture shows the
+flow-graph generated for the two-mode example above:
+
+<img src="docs/flowgraphs/multi-mode-sniffer.svg" alt="Multi-Mode Multi-Channel Sniffer Flow-Graph" width="2000"/>

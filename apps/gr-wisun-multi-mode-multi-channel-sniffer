@@ -1,0 +1,221 @@
+#!/usr/bin/env python3
+# coding: utf-8
+#
+# Copyright (c) 2026 Gardena GmbH
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""Sniffer application to receive a multiple Wi-SUN channels for packet analysis with Wireshark."""
+
+import os
+import re
+import signal
+import stat
+import sys
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+from collections import OrderedDict
+
+import osmosdr
+from gnuradio import blocks, gr, pdu, wisun
+from gnuradio.wisun.configuration import (InvalidWiSunChannelPlanException, InvalidWiSunParametersException,
+                                          InvalidWiSunPhyModeException, InvalidWiSunPhyTypeException,
+                                          InvalidWiSunRegulatoryDomainException, UnsupportedWiSunChannelException,
+                                          UnsupportedWiSunPhyModeIdException, WiSunConfiguration)
+from gnuradio.wisun.parameters import (SUN_FSK_CHANNEL_PAGE, WISUN_CHANNEL_PLANS, WISUN_COUNTRY_CODES,
+                                       WISUN_FREQUENCY_BAND_802154_MAPPING, WISUN_FREQUENCY_BANDS, WISUN_PHY_MODES_FSK,
+                                       WISUN_PHY_TYPES)
+from gnuradio.wisun.util import tabular_pretty_print
+
+
+class GrWisunMultiModeMultiChannelSniffer(gr.top_block):
+    """Multi-mode multi-channel sniffer main class."""
+
+    def __init__(self, device_string, gain, sample_rate, center_frequency, dest_file, wisun_configs):
+        gr.top_block.__init__(self)
+
+        ##################################################
+        # Blocks
+        ##################################################
+        if device_string is None:
+            osmosdr_source = osmosdr.source()
+        else:
+            osmosdr_source = osmosdr.source(device_string)
+        osmosdr_source.set_sample_rate(sample_rate)
+        osmosdr_source.set_center_freq(center_frequency, 0)
+        osmosdr_source.set_gain_mode(False, 0)
+        osmosdr_source.set_gain(gain, 0)
+        osmosdr_source.set_if_gain(0, 0)
+        osmosdr_source.set_bb_gain(0, 0)
+        osmosdr_source.set_bandwidth(0, 0)
+
+        pdu_to_tagged_stream = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
+        file_sink = blocks.file_sink(gr.sizeof_char*1, dest_file, False)
+        file_sink.set_unbuffered(True)
+
+        receivers = []
+        for wisun_config in wisun_configs:
+            radio_config = wisun_config.radio_configuration()
+            metadata = {
+                "packet-bit-rate": radio_config.data_rate(),
+                "packet-channel-page": SUN_FSK_CHANNEL_PAGE,
+                "packet-phy-band": WISUN_FREQUENCY_BAND_802154_MAPPING[wisun_config.channel_plan_id],
+            }
+            if radio_config.is_valid_802154_phy_mode():
+                phy_type, phy_mode = radio_config.get_802154_phy_type_mode()
+                metadata['packet-phy-type'] = phy_type
+                metadata['packet-phy-mode'] = phy_mode
+
+            print(f"Setting up multi-channel receiver for Wi-SUN configuration [{wisun_configs.index(wisun_config)}]:")
+            multi_channel_receiver = wisun.multi_channel_receiver(sample_rate,
+                                                                  center_frequency,
+                                                                  radio_config.channel_0_center_frequency,
+                                                                  radio_config.channel_spacing,
+                                                                  radio_config.symbol_rate,
+                                                                  radio_config.channels,
+                                                                  metadata)
+            receivers.append(multi_channel_receiver)
+
+        ##################################################
+        # Connections
+        ##################################################
+        for receiver in receivers:
+            self.connect((osmosdr_source, 0), (receiver, 0))
+            self.msg_connect((receiver, 'pdus'), (pdu_to_tagged_stream, 'pdus'))
+        self.connect((pdu_to_tagged_stream, 0), (file_sink, 0))
+
+
+def main():
+    parser = ArgumentParser(description="Multi channel Wi-SUN sniffer.", formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--device', type=str, default=None,
+                        help="OsmoSDR device string (leave empty if only one SDR connected)")
+    parser.add_argument('--gain', type=int, default=30, help="SDR hardware RX gain [dB]")
+    parser.add_argument('-s', '--sample-rate', type=float, default=8e6, help="SDR hardware sample rate [Hz]")
+    parser.add_argument('-f', '--frequency', type=float, default=866.1e6, help="SDR hardware center frequency [Hz]")
+    parser.add_argument('--dest-file', type=str, default="/tmp/gr-wisun-sniffer", help="Output file (FIFO)")
+    parser.add_argument('-r', '--regulatory-domain', type=str, default="EU", help="Wi-SUN regulatory domain")
+    parser.add_argument('-m', '--mode', action='append', default=[],
+                        help="Wi-SUN mode to receive (tuple with channel plan ID, PHY type, PHY mode). "
+                        "Repeat argument for multiple modes.")
+    parser.add_argument('--list-regulatory-domains', action="store_true",
+                        help="List Wi-SUN regulatory domains & exit")
+    parser.add_argument('--list-channel-plans', action="store_true",
+                        help="List Wi-SUN channel plans & exit")
+    parser.add_argument('--list-phy-types', action="store_true",
+                        help="List Wi-SUN PHY types (first 4 bits of PHY mode ID) & exit")
+    parser.add_argument('--list-phy-modes', action="store_true",
+                        help="List Wi-SUN PHY modes for FSK (second 4 bits of PHY mode ID) & exit")
+    parser.add_argument('--flow-graph-file', type=str, default=None,
+                        help="Write flow-graph to given file (Graphviz dot format).")
+    args = parser.parse_args()
+
+    if args.list_regulatory_domains:
+        for country in sorted(WISUN_COUNTRY_CODES.keys()):
+            print(f"{country}: {WISUN_COUNTRY_CODES[country]}")
+        sys.exit(0)
+
+    if args.list_channel_plans:
+        print("ID\tName\t\tFrequency band\t\tChannel spacing")
+        print('-'*80)
+        for id_ in sorted(WISUN_CHANNEL_PLANS.keys()):
+            name, spacing, f0_center_freq = WISUN_CHANNEL_PLANS[id_]
+            band = WISUN_FREQUENCY_BANDS[id_]
+            print(f"{id_}\t{name}\t{band[0]:.1f} - {band[1]:.1f} MHz\t{spacing / 1000:.0f} kHz")
+        sys.exit(0)
+
+    if args.list_phy_types:
+        for id_ in sorted(WISUN_PHY_TYPES.keys()):
+            print(f"{id_}: {WISUN_PHY_TYPES[id_]}")
+        sys.exit(0)
+
+    if args.list_phy_modes:
+        print("ID  Modulation  Symbol rate  Modulation Index")
+        print("-"*80)
+        for id_ in sorted(WISUN_PHY_MODES_FSK.keys()):
+            modulation, symbol_rate, modulation_index, _ = WISUN_PHY_MODES_FSK[id_]
+            print(f"{id_}   {modulation}       {symbol_rate / 1000:3.0f} kbps     {modulation_index:.1f}")
+        sys.exit(0)
+
+    # check if dest_file exists & is a FIFO; create if necessary
+    if os.path.exists(args.dest_file):
+        if not stat.S_ISFIFO(os.stat(args.dest_file).st_mode):
+            sys.stderr.write(f"ERROR: file '{args.dest_file}' exists, but is not a FIFO\n")
+            sys.exit(1)
+    else:
+        os.mkfifo(args.dest_file)
+
+    if len(args.mode) == 0:
+        sys.stderr.write("Please specify at least one mode with '-m'.\n")
+        sys.exit(1)
+
+    print("Receiver settings:")
+    tabular_pretty_print(OrderedDict([
+        ("Sample rate", f"{args.sample_rate / 1e6:.1f} MHz"),
+        ("Frequency", f"{args.frequency / 1e6:.1f} MHz"),
+        ("Gain", f"{args.gain}"),
+    ]))
+
+    configs = []
+    for mode in args.mode:
+        if not re.match(r"^\d+,\d+,\d+$", mode):
+            sys.stderr.write(f"Error: invalid mode '{mode}'\n")
+            sys.stderr.write("Please specify mode as tuple of channel plan ID, PHY type, PHY mode, e.g. '32,0,1'.\n")
+            sys.exit(1)
+        channel_plan_id, phy_type, phy_mode = (int(x) for x in mode.split(','))
+        phy_mode_id = (phy_type << 4) + phy_mode
+        try:
+            config = WiSunConfiguration(regulatory_domain=args.regulatory_domain,
+                                        channel_plan_id=channel_plan_id,
+                                        phy_mode_id=phy_mode_id)
+        except (InvalidWiSunChannelPlanException, InvalidWiSunParametersException,
+                InvalidWiSunPhyModeException, InvalidWiSunPhyTypeException,
+                InvalidWiSunRegulatoryDomainException, UnsupportedWiSunChannelException,
+                UnsupportedWiSunPhyModeIdException) as e:
+            sys.stderr.write(f"ERROR: {e}\n")
+            sys.exit(1)
+
+        print(f"WiSUN configuration [{len(configs)}]:")
+        tabular_pretty_print(config.info())
+        print(f"Radio configuration [{len(configs)}]:")
+        tabular_pretty_print(config.radio_configuration().info())
+
+        if config.is_ofdm():
+            sys.stderr.write("ERROR: OFDM modes are not (yet) supported.\n")
+            sys.exit(1)
+
+        configs.append(config)
+
+    sniffer = GrWisunMultiModeMultiChannelSniffer(args.device,
+                                                  args.gain,
+                                                  args.sample_rate,
+                                                  args.frequency,
+                                                  args.dest_file,
+                                                  configs)
+
+    def sig_handler(sig=None, frame=None):
+        sniffer.stop()
+        sniffer.wait()
+
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, sig_handler)
+    signal.signal(signal.SIGTERM, sig_handler)
+
+    sniffer.start()
+
+    if args.flow_graph_file is not None:
+        with open(args.flow_graph_file, 'w') as f:
+            f.write("digraph gr_wisun_multi_mode_multi_channel_sniffer {\n")
+            f.write(sniffer.edge_list())
+            f.write("\nedge [style=dashed]\n")
+            f.write(sniffer.msg_edge_list())
+            f.write("}\n")
+
+    try:
+        input('Press Enter to quit:\n')
+    except EOFError:
+        pass
+    sniffer.stop()
+    sniffer.wait()
+
+
+if __name__ == '__main__':
+    main()

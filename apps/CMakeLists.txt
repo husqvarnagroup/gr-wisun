@@ -12,4 +12,5 @@ gr_python_install(PROGRAMS
   gr-wisun-single-channel-sniffer
   gr-wisun-multi-channel-sniffer
   gr-wisun-multi-channel-sniffer-gui
+  gr-wisun-multi-mode-multi-channel-sniffer
   DESTINATION bin)
