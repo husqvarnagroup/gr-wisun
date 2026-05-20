@@ -129,7 +129,8 @@ class GrWisunMultiChannelSniffer(gr.top_block, Qt.QWidget):
                                                               radio_config.channel_0_center_frequency,
                                                               radio_config.channel_spacing,
                                                               radio_config.symbol_rate,
-                                                              radio_config.channels)
+                                                              radio_config.channels,
+                                                              metadata)
 
         pdu_to_tagged_stream = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         file_sink = blocks.file_sink(gr.sizeof_char*1, dest_file, False)
