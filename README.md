@@ -9,10 +9,19 @@ Overview
 
 This out-of-tree module for GNU Radio provides basic blocks to support
 Wi-SUN (more specifically the SUN FSK PHY specified in section 19 of
-IEEE 802.15.4-2020).
+IEEE 802.15.4-2020). It allows sniffing Wi-SUN packets and feeding
+them to Wireshark.
 
-At the moment, this is mostly a proof-of-concept and only FSK
-modulation is supported.
+At the moment, this is mostly a proof-of-concept and comes with the
+following limitations:
+- only FSK modulation is supported (no OFDM)
+- only receiving is supported (packet sending not implemented)
+- performance is not optimized (in particular the clock
+  synchronization could use more tuning)
+
+That said, integration with Wireshark works well, and the sniffer is
+fully functional.
+
 
 Building & Installation
 =======================
@@ -176,8 +185,8 @@ This application allows setting up multiple multi-channel sniffers to
 sniff packets with different Wi-SUN modes (different channel plan ID,
 PHY type & PHY mode, but only one regulatory domain) simultaneously.
 
-The sample rate and center frequency of the receiver must be specify
-and must satisfy the following conditions for all specified modes:
+The sample rate and center frequency of the receiver must be specified
+and must satisfy the following conditions for all selected modes:
 
 - sample rate must be an integer multiple of channel spacing
 - center frequency offset from channel 0 center frequency must be a
