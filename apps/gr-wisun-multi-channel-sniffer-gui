@@ -9,7 +9,6 @@ import signal
 import sys
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 
-import sip
 from gnuradio import qtgui
 from gnuradio.fft import window
 from gnuradio.wisun.cli import (
@@ -21,12 +20,12 @@ from gnuradio.wisun.cli import (
     handle_list_arguments,
 )
 from gnuradio.wisun.multi_channel_sniffer import MultiChannelSniffer
-from PyQt5 import Qt, QtCore
+from PyQt6 import QtCore, QtGui, QtWidgets, sip
 
 FFT_SIZE = 4096
 
 
-class GuiMultiChannelSniffer(MultiChannelSniffer, Qt.QWidget):
+class GuiMultiChannelSniffer(MultiChannelSniffer, QtWidgets.QWidget):
     """The multi-channel sniffer with a spectrum and waterfall plot of the received signal.
 
     The signal processing is exactly MultiChannelSniffer's; everything here is the GUI.
@@ -37,23 +36,23 @@ class GuiMultiChannelSniffer(MultiChannelSniffer, Qt.QWidget):
         MultiChannelSniffer.__init__(self, device_string, gain, dest_file, wisun_config,
                                      name="Multi-Channel Wi-SUN FSK Sniffer", catch_exceptions=True)
 
-        Qt.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
         self.setWindowTitle("Multi-Channel Wi-SUN FSK Sniffer")
         try:
-            self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
+            self.setWindowIcon(QtGui.QIcon.fromTheme('gnuradio-grc'))
         # a missing icon theme must not stop the sniffer; BaseException is what the
         # GRC-generated code catches here
         except BaseException as exc:  # noqa: BLE001
             print(f"Qt GUI: Could not set Icon: {exc!s}", file=sys.stderr)
-        self._layout_top = Qt.QVBoxLayout()
+        self._layout_top = QtWidgets.QVBoxLayout()
         self.setLayout(self._layout_top)
-        self._scroll_area = Qt.QScrollArea()
+        self._scroll_area = QtWidgets.QScrollArea()
         self._layout_top.addWidget(self._scroll_area)
         self._scroll_area.setWidgetResizable(True)
-        self._top_widget = Qt.QWidget()
+        self._top_widget = QtWidgets.QWidget()
         self._scroll_area.setWidget(self._top_widget)
-        self._layout_main_area = Qt.QVBoxLayout(self._top_widget)
-        self._settings = Qt.QSettings("gnuradio/flowgraphs", "gr_wisun_multi_channel_sniffer_gui")
+        self._layout_main_area = QtWidgets.QVBoxLayout(self._top_widget)
+        self._settings = QtCore.QSettings("gnuradio/flowgraphs", "gr_wisun_multi_channel_sniffer_gui")
         try:
             geometry = self._settings.value("geometry")
             if geometry:
@@ -67,7 +66,7 @@ class GuiMultiChannelSniffer(MultiChannelSniffer, Qt.QWidget):
         ##################################################
         gain_range = qtgui.Range(0, 70, 1, 10, 200)
         gain_slider = qtgui.RangeWidget(gain_range, self.set_gain, "Source Gain", "counter_slider", float,
-                                        QtCore.Qt.Horizontal)
+                                        QtCore.Qt.Orientation.Horizontal)
         self._layout_main_area.addWidget(gain_slider)
 
         spectrum_sink = qtgui.freq_sink_c(
@@ -83,7 +82,7 @@ class GuiMultiChannelSniffer(MultiChannelSniffer, Qt.QWidget):
         spectrum_sink.enable_grid(True)
         spectrum_sink.enable_axis_labels(True)
         spectrum_sink.enable_control_panel(True)
-        spectrum_sink_wrapped = sip.wrapinstance(spectrum_sink.qwidget(), Qt.QWidget)
+        spectrum_sink_wrapped = sip.wrapinstance(spectrum_sink.qwidget(), QtWidgets.QWidget)
         self._layout_main_area.addWidget(spectrum_sink_wrapped)
         self.connect((self.osmosdr_source, 0), (spectrum_sink, 0))
 
@@ -95,13 +94,13 @@ class GuiMultiChannelSniffer(MultiChannelSniffer, Qt.QWidget):
             "OsmoSDR Source Signal Waterfall")
         waterfall_sink.set_update_time(update_rate)
         waterfall_sink.enable_axis_labels(True)
-        waterfall_sink_wrapped = sip.wrapinstance(waterfall_sink.qwidget(), Qt.QWidget)
+        waterfall_sink_wrapped = sip.wrapinstance(waterfall_sink.qwidget(), QtWidgets.QWidget)
         self._layout_main_area.addWidget(waterfall_sink_wrapped)
         self.connect((self.osmosdr_source, 0), (waterfall_sink, 0))
 
     def closeEvent(self, event):
         """Save the window geometry and stop the flow graph when the window is closed."""
-        self._settings = Qt.QSettings("gnuradio/flowgraphs", "gr_wisun_multi_channel_sniffer_gui")
+        self._settings = QtCore.QSettings("gnuradio/flowgraphs", "gr_wisun_multi_channel_sniffer_gui")
         self._settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -139,7 +138,7 @@ def main():
                                  phy_mode_id=(args.phy_type << 4) + args.phy_mode,
                                  allowed_channels=parse_channels(args.channels))
 
-    qapp = Qt.QApplication(sys.argv)
+    qapp = QtWidgets.QApplication(sys.argv)
     sniffer = GuiMultiChannelSniffer(args.device, args.gain, args.dest_file, config, args.update_rate)
 
     # not cli.run_until_interrupted: this one has to leave the Qt event loop rather than
@@ -147,14 +146,14 @@ def main():
     def handle_signal(sig=None, frame=None):
         sniffer.stop()
         sniffer.wait()
-        Qt.QApplication.quit()
+        QtWidgets.QApplication.quit()
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
 
     sniffer.start()
     sniffer.show()
-    qapp.exec_()
+    qapp.exec()
 
 
 if __name__ == '__main__':
