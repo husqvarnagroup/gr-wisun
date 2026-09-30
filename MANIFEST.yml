@@ -22,6 +22,7 @@ website: # If you have a separate project website, put it here
 description: |-
   This OOT module implements basic blocks that allow receiving Wi-SUN
   packets, which can be fed into Wireshark. This allows using SDR
-  hardware as a Wi-SUN sniffer. At the moment, only 2-FSK modulation
-  is supported.
+  hardware as a Wi-SUN sniffer. At the moment, only the SUN FSK PHY is
+  supported, with or without the NRNSC forward error correction of
+  Wi-SUN PHY type 1; there is no OFDM and no transmit path.
 file_format: 1
