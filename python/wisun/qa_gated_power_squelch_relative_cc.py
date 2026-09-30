@@ -6,6 +6,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+import cmath
+
 from gnuradio import gr, gr_unittest
 from gnuradio import blocks
 try:
@@ -76,9 +78,13 @@ class qa_gated_power_squelch_relative_cc(gr_unittest.TestCase):
         by a factor of a hundred or more; keeping to the buffer means the input it did not
         get to must stay unconsumed, or samples go missing instead.
         """
-        n_signal = 20000
-        # quiet first, so the noise floor settles below the burst
-        src_data = tuple([1e-9] * 2000 + [1] * n_signal)
+        n_quiet = 2000
+        n_signal = 6000
+        # A burst of constant magnitude, so the squelch opens and closes cleanly, but with
+        # every sample a different value, so that a duplicated or dropped stretch cannot
+        # hide behind a constant.
+        burst = [cmath.exp(1j * i) for i in range(n_signal)]
+        src_data = tuple([1e-9] * n_quiet + burst)
         src = blocks.vector_source_c(src_data)
         blk = gated_power_squelch_relative_cc(30, 1, 3)
         dst = blocks.vector_sink_c()
@@ -87,10 +93,10 @@ class qa_gated_power_squelch_relative_cc(gr_unittest.TestCase):
         blk.set_max_noutput_items(16)
         self.tb.run()
 
-        # every signal sample, exactly once, and nothing from the quiet stretch
+        # the whole burst, in order, exactly once, and nothing from the quiet stretch
         result = dst.data()
         self.assertEqual(len(result), n_signal)
-        self.assertComplexTuplesAlmostEqual(result, tuple([1] * n_signal), places=10)
+        self.assertComplexTuplesAlmostEqual(result, tuple(burst), places=6)
 
 
 if __name__ == '__main__':
