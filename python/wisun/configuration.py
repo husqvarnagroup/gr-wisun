@@ -242,6 +242,15 @@ class WiSunConfiguration:
         """Check if configuration uses FSK modulation."""
         return self.phy_type() in {0, 1}
 
+    def uses_fec(self) -> bool:
+        """Check if configuration uses forward error correction.
+
+        Wi-SUN PHY type 1 is FSK with NRNSC FEC, i.e. the uncoded PHY type 0 modes plus
+        coding; symbol rate, deviation, modulation index and channel spacing are
+        unchanged.
+        """
+        return self.phy_type() == 1
+
     def is_ofdm(self) -> bool:
         """Check if configuration uses OFDM modulation."""
         return self.phy_type() in {2, 3, 4, 5}

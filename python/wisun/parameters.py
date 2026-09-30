@@ -17,6 +17,13 @@
 # [802.15.4] 10.1.3.9
 SUN_FSK_CHANNEL_PAGE = 10
 
+# Start-of-frame delimiter (SFD) for 2-FSK with phySunFskSfd = 0, in the order the bits are
+# sent on air. Coding is signalled purely by which of the two a transmitter sends; there is
+# no FEC bit in the PHY header.
+# [802.15.4] 19.2.3 (Table 19-2)
+SUN_FSK_SFD_UNCODED = 0x904E
+SUN_FSK_SFD_CODED = 0x6F4E
+
 # [802.15.4] Table 7-21: Frequency band identifier values
 FREQUENCY_BAND_IDENTIFIERS = {
     # Frequency band identifier: Band designation

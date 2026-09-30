@@ -9,23 +9,39 @@
 """Hierarchical block to receive a single channel on baseband."""
 
 from gnuradio import analog, blocks, digital, gr, wisun, pdu
+from gnuradio.wisun.parameters import SUN_FSK_SFD_CODED, SUN_FSK_SFD_UNCODED
 import pmt
 
 RSSI_TAG_SYMBOLS = 20  # number of symbols to evaluate per RSSI-tag; should be < preamble length
 DC_CORRECTION_SYMBOLS = 30  # number of symbols for DC correction estimation; should be < preamble length
 
+# Number of leading bits of a packet that data whitening does not cover: the SFD, plus the
+# PHY header. For a coded packet the PHY header is the first interleaver block, twice as
+# long on air, and it is the one part of the frame that is not whitened.
+HEADER_BITS_UNCODED = 16 + 16
+HEADER_BITS_CODED = 16 + 32
+
 
 class baseband_channel_receiver(gr.hier_block2):
     """Block to receive Wi-SUN packets on a single baseband channel (i.e. already filtered and centered to 0 Hz)."""
 
-    def __init__(self, samples_per_symbol, sfd=0b1001000001001110, gated_power_squelch=False, metadata=None):
-        """Initialize block."""
+    def __init__(self, samples_per_symbol, sfd=None, fec=False, gated_power_squelch=False, metadata=None):
+        """Initialize block.
+
+        If `fec` is set, packets are expected to be FEC-coded (Wi-SUN PHY type 1). A coded mode changes
+        nothing below the bits, so the receive chain up to and including the bit slicer is the same; what
+        differs is the SFD to correlate against, the span data whitening covers, and the decoding of the
+        packet data. Note that a receiver locked to one SFD is deaf to the other.
+        """
         gr.hier_block2.__init__(self,
                                 "baseband_channel_receiver",
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex),  # Input signature
                                 gr.io_signature(0, 0, 0))  # Output signature
 
         self._samples_per_symbol = samples_per_symbol
+        self._fec = fec
+        if sfd is None:
+            sfd = SUN_FSK_SFD_CODED if fec else SUN_FSK_SFD_UNCODED
         self._sfd = sfd
         self._metadata = {} if metadata is None else metadata
 
@@ -54,11 +70,13 @@ class baseband_channel_receiver(gr.hier_block2):
             128,
             [])
         self.binary_slicer_block = digital.binary_slicer_fb()
-        self.correlate_sync_word_block = wisun.correlate_sync_word_bb(self._sfd)
+        self.correlate_sync_word_block = wisun.correlate_sync_word_bb(self._sfd, self._fec)
         self.packet_data_gate_block = wisun.packet_data_gate_bb('wisun-packet')
-        self.data_whitening_block = wisun.data_whitening_bb('wisun-packet', 32)
+        self.data_whitening_block = wisun.data_whitening_bb(
+            'wisun-packet', HEADER_BITS_CODED if self._fec else HEADER_BITS_UNCODED)
         self.unpacked_to_packed_block = blocks.unpacked_to_packed_bb(1, gr.GR_LSB_FIRST)
         self.tagged_stream_to_pdu_block = pdu.tagged_stream_to_pdu(gr.types.byte_t, 'wisun-packet')
+        self.fec_decode_block = wisun.pdu_fec_decode() if self._fec else None
         self.metadata_blocks = []
 
         for key in self._metadata:
@@ -92,11 +110,11 @@ class baseband_channel_receiver(gr.hier_block2):
         self.connect((self.data_whitening_block, 0), (self.unpacked_to_packed_block, 0))
         self.connect((self.unpacked_to_packed_block, 0), (self.tagged_stream_to_pdu_block, 0))
         self.message_port_register_hier_out('pdus')
-        if len(self.metadata_blocks) == 0:
-            self.msg_connect((self.tagged_stream_to_pdu_block, 'pdus'), (self, 'pdus'))
-        else:
-            previous_block = self.tagged_stream_to_pdu_block
-            for block in self.metadata_blocks:
-                self.msg_connect((previous_block, 'pdus'), (block, 'pdus'))
-                previous_block = block
-            self.msg_connect((previous_block, 'pdus'), (self, 'pdus'))
+        # the FEC decoding happens per packet in the message domain, which keeps it off the
+        # path that acquires the next packet
+        message_blocks = ([] if self.fec_decode_block is None else [self.fec_decode_block]) + self.metadata_blocks
+        previous_block = self.tagged_stream_to_pdu_block
+        for block in message_blocks:
+            self.msg_connect((previous_block, 'pdus'), (block, 'pdus'))
+            previous_block = block
+        self.msg_connect((previous_block, 'pdus'), (self, 'pdus'))

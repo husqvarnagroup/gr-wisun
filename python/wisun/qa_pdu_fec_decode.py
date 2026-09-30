@@ -184,14 +184,30 @@ class qa_pdu_fec_decode(gr_unittest.TestCase):
         msgs = self.decode([make_pdu(coded)], drop_invalid_frames=True)
         self.assertEqual(len(msgs), 0)
 
-    def test_008_incomplete_interleaver_block_is_dropped(self):
+    def test_008_wrong_whitening_span_is_rejected(self):
+        """Code symbols whitened over the encoded header as well must not decode.
+
+        This is what a de-whitening that starts 4 octets too early delivers. The path
+        metric then sits around a quarter of the code symbols, the same as for noise,
+        which is exactly what makes it a usable oracle while nothing works yet.
+        """
+        psdu = fec.append_fcs(bytes(range(138)))
+        code_bits = fec.encode_frame(psdu, whitened=True)
+        # de-whiten everything instead of everything past the first interleaver block
+        mask = fec.pn9_sequence(len(code_bits))
+        code_bits = [bit ^ m for bit, m in zip(code_bits, mask)]
+        msgs = self.decode([make_pdu(fec.bits_to_octets(code_bits))])
+
+        self.assertEqual(len(msgs), 0)
+
+    def test_009_incomplete_interleaver_block_is_dropped(self):
         """A PDU that is not a whole number of interleaver blocks cannot be a frame."""
         psdu = fec.append_fcs(b'truncated')
         coded = coded_octets_for(psdu)
         msgs = self.decode([make_pdu(coded[:-1]), make_pdu(b''), make_pdu(b'\x00')])
         self.assertEqual(len(msgs), 0)
 
-    def test_009_metadata_is_preserved(self):
+    def test_010_metadata_is_preserved(self):
         """Metadata from upstream must survive, and a header mismatch must not be fatal."""
         psdu = fec.append_fcs(bytes(range(60)))
         meta = pmt.dict_add(pmt.make_dict(),

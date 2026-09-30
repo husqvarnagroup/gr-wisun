@@ -91,6 +91,7 @@ class GrWisunSingleChannelSniffer(gr.top_block):
                                                                 channel_spacing=radio_config.channel_spacing,
                                                                 decimation=decimation,
                                                                 samples_per_symbol=samples_per_symbol,
+                                                                fec=wisun_config.uses_fec(),
                                                                 gated_power_squelch=False,
                                                                 metadata=metadata)
         add_pcap_hdr = wisun.pdu_add_pcapng_header(True, True, True)
