@@ -9,14 +9,15 @@
 ########################################################################
 # Install public header files
 ########################################################################
+# keep this list sorted, so that a missing entry is easy to spot
 install(FILES api.h
     correlate_sync_word_bb.h
-    packet_data_gate_bb.h
     data_whitening_bb.h
+    gated_power_squelch_relative_cc.h
+    packet_data_gate_bb.h
     pdu_add_pcap_header.h
-    rssi_tag_cc.h
-    power_squelch_relative_cc.h
-    tag_based_dc_correction_ff.h
     pdu_add_pcapng_header.h
     pdu_fec_decode.h
-    gated_power_squelch_relative_cc.h DESTINATION include/gnuradio/wisun)
+    power_squelch_relative_cc.h
+    rssi_tag_cc.h
+    tag_based_dc_correction_ff.h DESTINATION include/gnuradio/wisun)

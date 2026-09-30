@@ -6,16 +6,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+# keep this list sorted, so that a missing entry is easy to spot
 install(FILES
-    wisun_correlate_sync_word_bb.block.yml
-    wisun_packet_data_gate_bb.block.yml
-    wisun_data_whitening_bb.block.yml
-    wisun_pdu_add_pcap_header.block.yml
-    wisun_rssi_tag_cc.block.yml
-    wisun_power_squelch_relative_cc.block.yml
-    wisun_tag_based_dc_correction_ff.block.yml
-    wisun_pdu_add_pcapng_header.block.yml
     wisun_baseband_channel_receiver.block.yml
+    wisun_correlate_sync_word_bb.block.yml
+    wisun_data_whitening_bb.block.yml
     wisun_gated_power_squelch_relative_cc.block.yml
+    wisun_multi_channel_receiver.block.yml
+    wisun_packet_data_gate_bb.block.yml
+    wisun_pdu_add_pcap_header.block.yml
+    wisun_pdu_add_pcapng_header.block.yml
+    wisun_pdu_fec_decode.block.yml
+    wisun_power_squelch_relative_cc.block.yml
+    wisun_rssi_tag_cc.block.yml
     wisun_single_channel_receiver.block.yml
-    wisun_multi_channel_receiver.block.yml DESTINATION share/gnuradio/grc/blocks)
+    wisun_tag_based_dc_correction_ff.block.yml DESTINATION share/gnuradio/grc/blocks)
