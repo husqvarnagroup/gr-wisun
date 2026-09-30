@@ -90,6 +90,40 @@ class qa_tag_based_dc_correction_ff(gr_unittest.TestCase):
         assert corr_start_tags[1].offset == 34
         assert pmt.to_float(corr_start_tags[1].value) == -0.5
 
+    def test_002_a_start_tag_without_an_end_tag_restarts_estimation(self):
+        """A new burst must be estimated afresh even if the previous one never ended.
+
+        This block leaves its correcting state only on an end tag, so anything that stops
+        those arriving - a squelch that has stopped closing because its noise floor estimate
+        sits below the real one, say - would otherwise leave every following burst corrected
+        by the offset of a burst long past, and so demodulated around the wrong threshold.
+        """
+        # two bursts with offsets of 8 and -0.5, and no end tag anywhere
+        src_data = tuple(
+            10 * [100] +
+            5 * [7, 9] +
+            10 * [-100] +
+            5 * [-1.5, 0.5]
+        )
+        src = blocks.vector_source_f(src_data,
+                                     tags=(make_tag("sob", 0, 10),
+                                           make_tag("sob", 0, 30)))
+        blk = tag_based_dc_correction_ff("sob", "eob", 4)
+        dst = blocks.vector_sink_f()
+        self.tb.connect(src, blk, dst)
+        self.tb.run()
+
+        corr_start_tags = [t for t in dst.tags()
+                           if str(t.key) == "dc_correction_correction_start"]
+        # the second burst must get an estimate of its own, rather than the first one's
+        self.assertEqual(len(corr_start_tags), 2)
+        self.assertEqual(corr_start_tags[0].offset, 14)
+        self.assertAlmostEqual(pmt.to_float(corr_start_tags[0].value), 8)
+        self.assertEqual(corr_start_tags[1].offset, 34)
+        self.assertAlmostEqual(pmt.to_float(corr_start_tags[1].value), -0.5)
+        # and the samples of the second burst must be corrected with its own offset
+        self.assertFloatTuplesAlmostEqual(dst.data()[34:], 3 * [-1, 1])
+
 
 if __name__ == '__main__':
     gr_unittest.run(qa_tag_based_dc_correction_ff)

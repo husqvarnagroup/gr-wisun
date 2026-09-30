@@ -27,6 +27,12 @@ private:
     std::string d_signal_end_tag;
     int d_estimation_length;
     int d_estimation_sample_count;
+    /* absolute offset of the start tag the current estimation belongs to, so that the
+     * tag which started it is not mistaken for the start of a further burst */
+    uint64_t d_signal_start_offset;
+
+    /*! \brief Begin estimating the offset of a new burst starting at \p start_offset. */
+    void start_estimation(uint64_t start_offset);
 
 public:
     tag_based_dc_correction_ff_impl(const std::string signal_start_tag,
@@ -37,7 +43,7 @@ public:
     // Where all the action really happens
     int work(int noutput_items,
              gr_vector_const_void_star& input_items,
-             gr_vector_void_star& output_items);
+             gr_vector_void_star& output_items) override;
 };
 
 } // namespace wisun

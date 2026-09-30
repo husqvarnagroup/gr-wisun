@@ -39,7 +39,8 @@ tag_based_dc_correction_ff_impl::tag_based_dc_correction_ff_impl(
       d_signal_start_tag(signal_start_tag),
       d_signal_end_tag(signal_end_tag),
       d_estimation_length(estimation_length),
-      d_estimation_sample_count(0)
+      d_estimation_sample_count(0),
+      d_signal_start_offset(0)
 {
 }
 
@@ -47,6 +48,14 @@ tag_based_dc_correction_ff_impl::tag_based_dc_correction_ff_impl(
  * Our virtual destructor.
  */
 tag_based_dc_correction_ff_impl::~tag_based_dc_correction_ff_impl() {}
+
+void tag_based_dc_correction_ff_impl::start_estimation(uint64_t start_offset)
+{
+    d_offset = 0;
+    d_estimation_sample_count = 0;
+    d_state = state_estimating;
+    d_signal_start_offset = start_offset;
+}
 
 int tag_based_dc_correction_ff_impl::work(int noutput_items,
                                           gr_vector_const_void_star& input_items,
@@ -71,9 +80,7 @@ int tag_based_dc_correction_ff_impl::work(int noutput_items,
                   */
             int samples_to_process = tags[0].offset - nitems_read(0);
             memcpy(out, in, samples_to_process * sizeof(float));
-            d_offset = 0;
-            d_estimation_sample_count = 0;
-            d_state = state_estimating;
+            start_estimation(tags[0].offset);
             return samples_to_process;
         }
     } else { /* handle samples until signal is lost */
@@ -95,6 +102,35 @@ int tag_based_dc_correction_ff_impl::work(int noutput_items,
                 return 1; /* consume 1 sample to avoid loop if we get both a signal start
                            * and end tag on the same sample */
             }
+        }
+
+        /*
+         * Look for a further start tag as well, before the end of the burst we are
+         * already in. Without this, the block leaves its correcting state only on an end
+         * tag, so anything that stops those arriving - a squelch that has stopped closing
+         * because its noise floor estimate sits below the real one, say - leaves every
+         * following burst corrected by the offset of a burst long past. Restarting on a
+         * start tag bounds the damage to the burst the estimate belonged to.
+         */
+        get_tags_in_range(tags,
+                          0,
+                          nitems_read(0),
+                          nitems_read(0) + usable_samples,
+                          pmt::string_to_symbol(d_signal_start_tag));
+        for (size_t i = 0; i < tags.size(); i++) {
+            if (tags[i].offset <= d_signal_start_offset) {
+                continue; /* the tag this estimation already belongs to */
+            }
+            const int samples_before_restart = (int)(tags[i].offset - nitems_read(0));
+            if (samples_before_restart == 0) {
+                /* a new burst starts here - estimate it from the beginning */
+                start_estimation(tags[i].offset);
+            } else {
+                /* finish the samples up to the new burst first, then restart next call */
+                usable_samples = samples_before_restart;
+                signal_lost = false;
+            }
+            break;
         }
 
         /* handle usable samples */
