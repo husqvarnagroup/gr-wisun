@@ -18,7 +18,7 @@ class single_channel_receiver(gr.hier_block2):
     """Block to receive Wi-SUN packets on a single channel."""
 
     def __init__(self, sample_rate, frequency_offset, channel_spacing, decimation, samples_per_symbol,
-                 gated_power_squelch=False, metadata=None):
+                 fec=False, gated_power_squelch=False, metadata=None):
         """Initialize block."""
         gr.hier_block2.__init__(self,
                                 "single_channel_receiver",
@@ -54,6 +54,7 @@ class single_channel_receiver(gr.hier_block2):
                 window.WIN_HAMMING,
                 6.76))
         baseband_channel_receiver = wisun.baseband_channel_receiver(samples_per_symbol,
+                                                                    fec=fec,
                                                                     gated_power_squelch=gated_power_squelch,
                                                                     metadata=metadata)
 

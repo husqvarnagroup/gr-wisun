@@ -71,7 +71,8 @@ class GrWisunMultiModeMultiChannelSniffer(gr.top_block):
                                                                   radio_config.channel_spacing,
                                                                   radio_config.symbol_rate,
                                                                   radio_config.channels,
-                                                                  metadata)
+                                                                  fec=wisun_config.uses_fec(),
+                                                                  metadata=metadata)
             receivers.append(multi_channel_receiver)
 
         ##################################################

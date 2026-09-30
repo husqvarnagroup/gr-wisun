@@ -22,7 +22,7 @@ class multi_channel_receiver(gr.hier_block2):
     """Block to receive Wi-SUN packets from multiple channels using polyphase channelizer."""
 
     def __init__(self, sample_rate, center_frequency, channel_0_frequency, channel_spacing, symbol_rate, channels,
-                 metadata=None):
+                 fec=False, metadata=None):
         """Initialize block."""
         gr.hier_block2.__init__(self,
                                 "multi_channel_receiver",
@@ -96,6 +96,7 @@ class multi_channel_receiver(gr.hier_block2):
                 covered_channels.add(wisun_channel)
                 metadata["packet-channel-number"] = wisun_channel
                 baseband_channel_receiver = wisun.baseband_channel_receiver(samples_per_symbol,
+                                                                            fec=fec,
                                                                             gated_power_squelch=True,
                                                                             metadata=metadata)
                 add_pcap_hdr = wisun.pdu_add_pcapng_header(True, True, True)
