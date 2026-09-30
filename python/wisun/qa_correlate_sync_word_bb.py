@@ -18,8 +18,10 @@ except ImportError:
     dirname, filename = os.path.split(os.path.abspath(__file__))
     sys.path.append(os.path.join(dirname, "bindings"))
     from gnuradio.wisun import correlate_sync_word_bb
+from gnuradio.wisun import fec
 
 SFD = 0b1001_0000_0100_1110
+SFD_CODED = 0b0110_1111_0100_1110
 
 
 def make_tag(key, value, offset, srcid=None):
@@ -146,6 +148,49 @@ class qa_correlate_sync_word_bb(gr_unittest.TestCase):
         # tag is delayed by 32 samples due to history, i.e. it is still on "1"
         self.assertEqual(tag.offset, 40)
         self.assertEqual(result_data[40], 1)
+
+    def test_003_correlate_sync_word_bb_fec(self):
+        """Test detection of a FEC-coded frame, whose PHY header has to be decoded."""
+        # a 142-octet PSDU, whitened, with a 4-octet FCS: PHR 0x088e
+        psdu = fec.append_fcs(bytes(range(138)))
+        self.assertEqual(len(psdu), 142)
+        preamble_octets = 8
+        src_data = fec.on_air_bits(psdu, preamble_octets=preamble_octets)
+
+        # set up fg
+        src = blocks.vector_source_b(src_data)
+        blk = correlate_sync_word_bb(SFD_CODED, True)
+        dst = blocks.vector_sink_b()
+        self.tb.connect(src, blk)
+        self.tb.connect(blk, dst)
+        self.tb.run()
+
+        tags = {str(tag.key): tag for tag in dst.tags()}
+        # the PHY header must come out of the first interleaver block
+        self.assertEqual(int(str(tags["wisun-packet-phr"].value)), 0x088E)
+        self.assertEqual(int(str(tags["wisun-packet-phr-frame-length"].value)), 142)
+        self.assertEqual(int(str(tags["wisun-packet-phr-fcs-type"].value)), 0)
+        self.assertEqual(int(str(tags["wisun-packet-phr-data-whitening"].value)), 1)
+        # framing must be driven by the on-air length, not by the frame length
+        self.assertEqual(int(str(tags["wisun-packet"].value)), 2 + fec.coded_length(142))
+        self.assertEqual(int(str(tags["wisun-packet-sfd"].value)), SFD_CODED)
+        # the packet tag sits on the first bit of the SFD, delayed by the block's history
+        delay = 16 + 32
+        self.assertEqual(tags["wisun-packet"].offset, delay + 8 * preamble_octets)
+
+    def test_004_correlate_sync_word_bb_fec_is_deaf_to_uncoded_sfd(self):
+        """A receiver locked to one SFD must be deaf to the other."""
+        psdu = fec.append_fcs(bytes(range(46)))
+        src_data = fec.on_air_bits(psdu)
+
+        src = blocks.vector_source_b(src_data)
+        blk = correlate_sync_word_bb(SFD, True)  # uncoded SFD, coded frames
+        dst = blocks.vector_sink_b()
+        self.tb.connect(src, blk)
+        self.tb.connect(blk, dst)
+        self.tb.run()
+
+        self.assertEqual(len(dst.tags()), 0)
 
 
 if __name__ == '__main__':

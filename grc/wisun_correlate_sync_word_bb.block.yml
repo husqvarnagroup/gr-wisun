@@ -8,12 +8,18 @@ category: '[Wi-SUN]'
 
 templates:
   imports: from gnuradio import wisun
-  make: wisun.correlate_sync_word_bb(${sfd})
+  make: wisun.correlate_sync_word_bb(${sfd}, ${fec})
 
 parameters:
 - id: sfd
   label: Start-of-Frame Delimiter
   dtype: int
+- id: fec
+  label: Forward Error Correction
+  dtype: bool
+  default: 'False'
+  options: ['False', 'True']
+  option_labels: ['No', 'Yes']
 
 inputs:
 - domain: stream

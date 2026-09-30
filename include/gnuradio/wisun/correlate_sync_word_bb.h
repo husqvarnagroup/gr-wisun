@@ -23,6 +23,13 @@ namespace wisun {
  * packet header (PHR) and adds tag "wisun-packet" containing the frame length to the
  * first bit of the SFD.
  *
+ * For FEC-coded frames (Wi-SUN PHY type 1), the PHY header is inside the coded block and
+ * cannot be read directly. It is instead the first interleaver block, and the only part
+ * of a coded frame that is not whitened, so this block deinterleaves and Viterbi-decodes
+ * the 4 octets following the SFD to read it. The value of the "wisun-packet" tag is then
+ * the number of octets on air rather than the frame length, since that is what the rest
+ * of the receive chain has to collect; see docs/sun-fsk-fec.md.
+ *
  * This block also adds some other tags with extracted information; this is mainly meant
  * for debugging.
  */
@@ -34,13 +41,14 @@ public:
     /*!
      * \brief Return a shared_ptr to a new instance of wisun::correlate_sync_word_bb.
      * \param sfd start-of-frame delimiter (2-byte word) to look for
+     * \param fec frames are FEC-coded, i.e. the PHY header needs to be decoded
      *
      * To avoid accidental use of raw pointers, wisun::correlate_sync_word_bb's
      * constructor is in a private implementation
      * class. wisun::correlate_sync_word_bb::make is the public interface for
      * creating new instances.
      */
-    static sptr make(uint16_t sfd);
+    static sptr make(uint16_t sfd, bool fec = false);
 
     /*!
      * \brief Set RX channel.

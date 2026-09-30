@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(correlate_sync_word_bb.h) */
-/* BINDTOOL_HEADER_FILE_HASH(de23e4429fca07abf36ea7fcac9a489c)                     */
+/* BINDTOOL_HEADER_FILE_HASH(1cd4fe39a8d05773340dd1a542d8156f)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -42,6 +42,7 @@ void bind_correlate_sync_word_bb(py::module& m)
 
         .def(py::init(&correlate_sync_word_bb::make),
              py::arg("sfd"),
+             py::arg("fec") = false,
              D(correlate_sync_word_bb, make))
 
 

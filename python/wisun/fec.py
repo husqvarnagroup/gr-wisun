@@ -23,8 +23,11 @@ as a readable reference on its own.
 SFD_UNCODED = 0x904E
 SFD_CODED = 0x6F4E
 
-# [802.15.4] 19.2.2: preamble is a repetition of 0x55
-PREAMBLE_OCTET = 0x55
+# The preamble is an alternating bit pattern ([802.15.4] 19.2.2). On air it runs
+# 0101... and ends on a 1, immediately before the SFD, which is what a correlator
+# looking for the end of the preamble keys on; as an octet transmitted least
+# significant bit first, that pattern is 0xaa.
+PREAMBLE_OCTET = 0xAA
 PREAMBLE_OCTETS = 8
 
 # [802.15.4] 19.3.6: the interleaver operates on blocks of 16 code symbols
