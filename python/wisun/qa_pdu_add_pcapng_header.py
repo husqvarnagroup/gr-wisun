@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2026 GARDENA GmbH.
 #
@@ -11,12 +10,12 @@
 Note: as currently implemented, the tests will fail on a big-endian machine.
 """
 
-import time
 import struct
+import time
 
-from gnuradio import gr, gr_unittest
-from gnuradio import blocks, pdu
 import pmt
+from gnuradio import blocks, gr, gr_unittest, pdu
+
 try:
     from gnuradio.wisun import pdu_add_pcapng_header
 except ImportError:

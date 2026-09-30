@@ -7,9 +7,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-from gnuradio import gr, gr_unittest
-from gnuradio import blocks
+"""Unit tests for correlate_sync_word_bb block."""
+
 import pmt
+from gnuradio import blocks, gr, gr_unittest
+
 try:
     from gnuradio.wisun import correlate_sync_word_bb
 except ImportError:
@@ -94,8 +96,8 @@ class qa_correlate_sync_word_bb(gr_unittest.TestCase):
         # check tags
         self.assertEqual(len(dst.tags()), 10)
         tags = dst.tags()
-        tag_keys = set([str(tag.key) for tag in tags])
-        assert tag_keys == set(("wisun-packet",
+        tag_keys = {str(tag.key) for tag in tags}
+        assert tag_keys == {"wisun-packet",
                                 "wisun-preamble-length",
                                 "wisun-packet-sfd",
                                 "wisun-packet-phr",
@@ -104,9 +106,9 @@ class qa_correlate_sync_word_bb(gr_unittest.TestCase):
                                 "wisun-packet-phr-data-whitening",
                                 "wisun-packet-phr-frame-length",
                                 "wisun-packet-payload",
-                                "wisun-packet-end"))
+                                "wisun-packet-end"}
         # check packet tag
-        tag = [tag for tag in tags if str(tag.key) == "wisun-packet"][0]
+        tag = next(tag for tag in tags if str(tag.key) == "wisun-packet")
         self.assertEqual(str(tag.key), "wisun-packet")
         self.assertEqual(int(str(tag.value)), 16)
         self.assertEqual(tag.offset, 64)  # 32 zeroes (from history) + 32 preamble bits

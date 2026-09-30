@@ -1,4 +1,3 @@
-# coding: utf-8
 #
 # Copyright (c) 2026 Gardena GmbH
 #
@@ -9,10 +8,10 @@
 
 def tabular_pretty_print(data):
     """Pretty print key/value data from dict as table."""
-    width1 = max([len(key) for key in data.keys()])
-    width2 = max([len(data[key]) for key in data.keys()])
+    width1 = max([len(key) for key in data])
+    width2 = max([len(data[key]) for key in data])
     print(f"┌─{'─'*width1}─┬─{'─'*width2}─┐")
-    for key in data.keys():
+    for key in data:
         print(f"│ {key:{width1}s} │ {data[key]:{width2}s} │")
     print(f"└─{'─'*width1}─┴─{'─'*width2}─┘")
 

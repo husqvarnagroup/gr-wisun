@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2026 GARDENA GmbH.
 #
@@ -14,8 +13,9 @@ encoder. It is the test that pins down how the pieces fit together, in particula
 the span that data whitening covers.
 """
 
-from gnuradio import blocks, gr, gr_unittest, pdu
 import pmt
+from gnuradio import blocks, gr, gr_unittest, pdu
+
 try:
     from gnuradio import wisun
 except ImportError:

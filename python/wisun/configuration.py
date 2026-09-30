@@ -1,4 +1,3 @@
-# coding: utf-8
 #
 # Copyright (c) 2026 Gardena GmbH
 #
@@ -7,10 +6,19 @@
 """Support for Wi-SUN configuration parsing & representation."""
 
 from collections import OrderedDict
-from math import log2, floor
+from math import floor, log2
 
-from .parameters import PHY_TYPES, PHY_MODES, WISUN_COUNTRY_CODES, WISUN_PHY_TYPES, WISUN_PHY_MODES_FSK, \
-    WISUN_PHY_MODES_OFDM, WISUN_CHANNEL_PLANS, WISUN_FREQUENCY_BANDS, WISUN_SUPPORTED_PARAMETERS
+from .parameters import (
+    PHY_MODES,
+    PHY_TYPES,
+    WISUN_CHANNEL_PLANS,
+    WISUN_COUNTRY_CODES,
+    WISUN_FREQUENCY_BANDS,
+    WISUN_PHY_MODES_FSK,
+    WISUN_PHY_MODES_OFDM,
+    WISUN_PHY_TYPES,
+    WISUN_SUPPORTED_PARAMETERS,
+)
 
 
 class InvalidWiSunRegulatoryDomainException(Exception):
@@ -111,7 +119,8 @@ class RadioConfiguration:
             f"channel spacing: {self.channel_spacing / 1000:.1f} kHz, " \
             f"channels: {','.join([str(c) for c in self.channels])}"
         if self.is_valid_802154_phy_mode():
-            s += " (802.15.4 PHY type / mode: %d / %d)" % self.get_802154_phy_type_mode()
+            phy_type, phy_mode = self.get_802154_phy_type_mode()
+            s += f" (802.15.4 PHY type / mode: {phy_type} / {phy_mode})"
         else:
             s += " (not a valid 802.15.4 PHY mode)"
         return s
@@ -119,7 +128,8 @@ class RadioConfiguration:
     def info(self) -> OrderedDict:
         """Return info in human readable form as ordered dictionary."""
         if self.is_valid_802154_phy_mode():
-            phy_mode_info = "%d / %d" % self.get_802154_phy_type_mode()
+            phy_type, phy_mode = self.get_802154_phy_type_mode()
+            phy_mode_info = f"{phy_type} / {phy_mode}"
         else:
             phy_mode_info = "(not a valid 802.15.4 PHY mode)"
         if len(self.channels) <= 10:
@@ -160,9 +170,9 @@ class RadioConfiguration:
     def get_802154_phy_type_mode(self) -> bool:
         """Get IEEE 802.15.4 PHY type & mode for current radio configuration."""
         desc = (self.data_rate(), self.modulation, self.modulation_index, self.channel_spacing)
-        for t in PHY_TYPES.keys():
-            if t in PHY_MODES.keys():
-                for mode in PHY_MODES[t].keys():
+        for t in PHY_TYPES:
+            if t in PHY_MODES:
+                for mode in PHY_MODES[t]:
                     if PHY_MODES[t][mode] == desc:
                         return (t, mode)
         return None
@@ -172,22 +182,24 @@ class WiSunConfiguration:
     """Represents Wi-SUN configuration."""
 
     def __init__(self, regulatory_domain: str, channel_plan_id: int, phy_mode_id: int,
-                 allowed_channels: list[int] = []):
+                 allowed_channels: list[int] | None = None):
         """Initialize class from given parameters."""
-        if regulatory_domain not in WISUN_COUNTRY_CODES.keys():
+        if allowed_channels is None:
+            allowed_channels = []
+        if regulatory_domain not in WISUN_COUNTRY_CODES:
             raise InvalidWiSunRegulatoryDomainException("unknown regulatory domain: " + regulatory_domain)
         self.regulatory_domain = regulatory_domain
-        if channel_plan_id not in WISUN_CHANNEL_PLANS.keys():
+        if channel_plan_id not in WISUN_CHANNEL_PLANS:
             raise InvalidWiSunChannelPlanException(f"invalid channel plan ID: {channel_plan_id}")
         self.channel_plan_id = channel_plan_id
         self.phy_mode_id = phy_mode_id
-        if self.phy_type() not in WISUN_PHY_TYPES.keys():
+        if self.phy_type() not in WISUN_PHY_TYPES:
             raise InvalidWiSunPhyTypeException(f"invalid Wi-SUN PHY type: {self.phy_type()}")
-        if self.is_fsk() and self.phy_mode() not in WISUN_PHY_MODES_FSK.keys():
+        if self.is_fsk() and self.phy_mode() not in WISUN_PHY_MODES_FSK:
             raise InvalidWiSunPhyModeException(f"invalid Wi-SUN PHY mode for FSK: {self.phy_mode()}")
-        if self.is_ofdm() and self.phy_mode() not in WISUN_PHY_MODES_OFDM.keys():
+        if self.is_ofdm() and self.phy_mode() not in WISUN_PHY_MODES_OFDM:
             raise InvalidWiSunPhyModeException(f"invalid Wi-SUN PHY mode for OFDM: {self.phy_mode()}")
-        if (regulatory_domain, channel_plan_id) not in WISUN_SUPPORTED_PARAMETERS.keys():
+        if (regulatory_domain, channel_plan_id) not in WISUN_SUPPORTED_PARAMETERS:
             raise InvalidWiSunParametersException(f"channel plan ID {channel_plan_id} is not supported for "
                                                   f"regulatory domain {regulatory_domain}")
         num_chans, supported_phy_mode_ids, chan_mask = WISUN_SUPPORTED_PARAMETERS[(regulatory_domain, channel_plan_id)]

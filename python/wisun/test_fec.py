@@ -1,4 +1,3 @@
-# coding: utf-8
 #
 # Copyright (c) 2026 Gardena GmbH
 #
@@ -10,9 +9,25 @@ import zlib
 
 import pytest
 
-from .fec import (SFD_CODED, append_fcs, bits_msb_first, bits_to_octets, coded_length, convolutional_encode,
-                  deinterleave, encode_frame, fcs, interleave, interleaver_permutation, octets_to_bits, on_air_bits,
-                  pad_bits, phr_value, pn9_sequence, value_msb_first)
+from .fec import (
+    SFD_CODED,
+    append_fcs,
+    bits_msb_first,
+    bits_to_octets,
+    coded_length,
+    convolutional_encode,
+    deinterleave,
+    encode_frame,
+    fcs,
+    interleave,
+    interleaver_permutation,
+    octets_to_bits,
+    on_air_bits,
+    pad_bits,
+    phr_value,
+    pn9_sequence,
+    value_msb_first,
+)
 
 # first 24 bits of the PN9 sequence given in [802.15.4] 16.2.3
 PN9_EXAMPLE_DATA = [0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1]
@@ -174,7 +189,7 @@ def test_whitening_leaves_the_encoded_header_alone():
     assert whitened[:32] == plain[:32], "the first interleaver block must not be whitened"
     assert whitened[32:] != plain[32:]
     mask = pn9_sequence(len(plain) - 32)
-    assert whitened[32:] == [bit ^ m for bit, m in zip(plain[32:], mask)]
+    assert whitened[32:] == [bit ^ m for bit, m in zip(plain[32:], mask, strict=True)]
 
 
 def test_real_frame_is_reproduced_bit_exactly():

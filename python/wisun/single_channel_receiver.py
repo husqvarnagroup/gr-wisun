@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2026 GARDENA GmbH.
 #
@@ -8,10 +7,9 @@
 
 """Hierarchical block to receive a single channel."""
 
-from gnuradio import analog, blocks, filter, gr
+from gnuradio import analog, blocks, filter, gr, wisun
 from gnuradio.fft import window
 from gnuradio.filter import firdes
-from gnuradio import wisun
 
 
 class single_channel_receiver(gr.hier_block2):

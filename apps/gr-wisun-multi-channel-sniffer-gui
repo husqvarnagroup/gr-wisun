@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 #
 # Copyright (c) 2026 Gardena GmbH
 # SPDX-License-Identifier: GPL-3.0-or-later
@@ -13,20 +12,31 @@ import sys
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from collections import OrderedDict
 
-from PyQt5 import Qt, QtCore
-import sip
-
 import osmosdr
+import sip
 from gnuradio import blocks, gr, pdu, qtgui, wisun
 from gnuradio.fft import window
-from gnuradio.wisun.configuration import (InvalidWiSunChannelPlanException, InvalidWiSunParametersException,
-                                          InvalidWiSunPhyModeException, InvalidWiSunPhyTypeException,
-                                          InvalidWiSunRegulatoryDomainException, UnsupportedWiSunChannelException,
-                                          UnsupportedWiSunPhyModeIdException, WiSunConfiguration)
-from gnuradio.wisun.parameters import (SUN_FSK_CHANNEL_PAGE, WISUN_CHANNEL_PLANS, WISUN_COUNTRY_CODES,
-                                       WISUN_FREQUENCY_BAND_802154_MAPPING, WISUN_FREQUENCY_BANDS, WISUN_PHY_MODES_FSK,
-                                       WISUN_PHY_TYPES)
+from gnuradio.wisun.configuration import (
+    InvalidWiSunChannelPlanException,
+    InvalidWiSunParametersException,
+    InvalidWiSunPhyModeException,
+    InvalidWiSunPhyTypeException,
+    InvalidWiSunRegulatoryDomainException,
+    UnsupportedWiSunChannelException,
+    UnsupportedWiSunPhyModeIdException,
+    WiSunConfiguration,
+)
+from gnuradio.wisun.parameters import (
+    SUN_FSK_CHANNEL_PAGE,
+    WISUN_CHANNEL_PLANS,
+    WISUN_COUNTRY_CODES,
+    WISUN_FREQUENCY_BAND_802154_MAPPING,
+    WISUN_FREQUENCY_BANDS,
+    WISUN_PHY_MODES_FSK,
+    WISUN_PHY_TYPES,
+)
 from gnuradio.wisun.util import tabular_pretty_print
+from PyQt5 import Qt, QtCore
 
 FFT_SIZE = 4096
 
@@ -35,6 +45,7 @@ class GrWisunMultiChannelSniffer(gr.top_block, Qt.QWidget):
     """Multi channel sniffer main class with GUI (adapted from multi_channel_sniffer_gui example)."""
 
     def __init__(self, device_string, gain, dest_file, wisun_config, update_rate):
+        """Build the flow graph and the GUI for the given configuration."""
         gr.top_block.__init__(self, "Multi-Channel Wi-SUN FSK Sniffer", catch_exceptions=True)
         radio_config = wisun_config.radio_configuration()
 
@@ -42,8 +53,10 @@ class GrWisunMultiChannelSniffer(gr.top_block, Qt.QWidget):
         self.setWindowTitle("Multi-Channel Wi-SUN FSK Sniffer")
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
-        except BaseException as exc:
-            print(f"Qt GUI: Could not set Icon: {str(exc)}", file=sys.stderr)
+        # a missing icon theme must not stop the sniffer; BaseException is what the
+        # GRC-generated code catches here
+        except BaseException as exc:  # noqa: BLE001
+            print(f"Qt GUI: Could not set Icon: {exc!s}", file=sys.stderr)
         self._layout_top = Qt.QVBoxLayout()
         self.setLayout(self._layout_top)
         self._scroll_area = Qt.QScrollArea()
@@ -57,8 +70,9 @@ class GrWisunMultiChannelSniffer(gr.top_block, Qt.QWidget):
             geometry = self._settings.value("geometry")
             if geometry:
                 self.restoreGeometry(geometry)
-        except BaseException as exc:
-            print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
+        # an unreadable saved geometry must not stop the sniffer
+        except BaseException as exc:  # noqa: BLE001
+            print(f"Qt GUI: Could not restore geometry: {exc!s}", file=sys.stderr)
 
         ##################################################
         # Variables
@@ -182,6 +196,7 @@ class GrWisunMultiChannelSniffer(gr.top_block, Qt.QWidget):
         self.connect((self._osmosdr_source, 0), (waterfall_sink, 0))
 
     def closeEvent(self, event):
+        """Save the window geometry and stop the flow graph when the window is closed."""
         self._settings = Qt.QSettings("gnuradio/flowgraphs", "gr_wisun_multi_channel_sniffer_gui")
         self._settings.setValue("geometry", self.saveGeometry())
         self.stop()
@@ -190,6 +205,7 @@ class GrWisunMultiChannelSniffer(gr.top_block, Qt.QWidget):
         event.accept()
 
     def set_gain(self, gain):
+        """Set the receiver gain, called by the GUI slider."""
         self._osmosdr_source.set_gain(gain, 0)
 
 
@@ -226,7 +242,7 @@ def main():
         print("ID\tName\t\tFrequency band\t\tChannel spacing")
         print('-'*80)
         for id_ in sorted(WISUN_CHANNEL_PLANS.keys()):
-            name, spacing, f0_center_freq = WISUN_CHANNEL_PLANS[id_]
+            name, spacing, _ = WISUN_CHANNEL_PLANS[id_]
             band = WISUN_FREQUENCY_BANDS[id_]
             print(f"{id_}\t{name}\t{band[0]:.1f} - {band[1]:.1f} MHz\t{spacing / 1000:.0f} kHz")
         sys.exit(0)

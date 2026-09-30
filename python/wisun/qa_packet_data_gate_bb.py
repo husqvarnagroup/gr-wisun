@@ -1,14 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2026 GARDENA GmbH.
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-from gnuradio import gr, gr_unittest
-from gnuradio import blocks
+"""Unit tests for packet_data_gate_bb block."""
+
 import pmt
+from gnuradio import blocks, gr, gr_unittest
+
 try:
     from gnuradio.wisun import packet_data_gate_bb
 except ImportError:

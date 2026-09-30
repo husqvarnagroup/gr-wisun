@@ -54,7 +54,7 @@ static_assert(sizeof(struct pcapng_section_header_block_no_options) == 28);
 #pragma pack(pop)
 
 /*
- * PCAP: Interface Description Block (IDB) (inital part only)
+ * PCAP: Interface Description Block (IDB) (initial part only)
  */
 
 #pragma pack(push, 1)

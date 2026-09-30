@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2026 GARDENA GmbH.
 #
@@ -8,9 +7,9 @@
 
 """Unit tests for tag_based_dc_correction_ff block."""
 
-from gnuradio import gr, gr_unittest
-from gnuradio import blocks
 import pmt
+from gnuradio import blocks, gr, gr_unittest
+
 try:
     from gnuradio.wisun import tag_based_dc_correction_ff
 except ImportError:

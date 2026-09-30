@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2026 GARDENA GmbH.
 #
@@ -10,8 +9,9 @@
 
 import random
 
-from gnuradio import blocks, gr, gr_unittest
 import pmt
+from gnuradio import blocks, gr, gr_unittest
+
 try:
     from gnuradio.wisun import pdu_fec_decode
 except ImportError:
@@ -41,7 +41,7 @@ def coded_octets_for(psdu, pad_value=1, fcs16=False):
     """
     code_bits = fec.encode_frame(psdu, whitened=True, fcs16=fcs16, pad_value=pad_value)
     mask = fec.pn9_sequence(len(code_bits) - 32)
-    code_bits = code_bits[:32] + [bit ^ m for bit, m in zip(code_bits[32:], mask)]
+    code_bits = code_bits[:32] + [bit ^ m for bit, m in zip(code_bits[32:], mask, strict=True)]
     return fec.bits_to_octets(code_bits)
 
 
@@ -195,7 +195,7 @@ class qa_pdu_fec_decode(gr_unittest.TestCase):
         code_bits = fec.encode_frame(psdu, whitened=True)
         # de-whiten everything instead of everything past the first interleaver block
         mask = fec.pn9_sequence(len(code_bits))
-        code_bits = [bit ^ m for bit, m in zip(code_bits, mask)]
+        code_bits = [bit ^ m for bit, m in zip(code_bits, mask, strict=True)]
         msgs = self.decode([make_pdu(fec.bits_to_octets(code_bits))])
 
         self.assertEqual(len(msgs), 0)

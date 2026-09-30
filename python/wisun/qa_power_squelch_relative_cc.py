@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2026 GARDENA GmbH.
 #
@@ -8,8 +7,8 @@
 
 """Unit tests for power_squelch_relative_cc block."""
 
-from gnuradio import gr, gr_unittest
-from gnuradio import blocks
+from gnuradio import blocks, gr, gr_unittest
+
 try:
     from gnuradio.wisun import power_squelch_relative_cc
 except ImportError:
@@ -32,7 +31,7 @@ class qa_power_squelch_relative_cc(gr_unittest.TestCase):
         self.tb = None
 
     def test_001_basic(self):
-        """Test basic block funciton."""
+        """Test basic block function."""
         src_data = (
             1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9, 1e-9,
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1,

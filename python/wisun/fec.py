@@ -1,4 +1,3 @@
-# coding: utf-8
 #
 # Copyright (c) 2026 Gardena GmbH
 #
@@ -212,7 +211,7 @@ def encode_frame(psdu, whitened=True, fcs16=False, pad_value=1):
     # exactly the first interleaver block and is left alone
     if whitened:
         mask = pn9_sequence(len(code_bits) - 32)
-        code_bits = code_bits[:32] + [bit ^ m for bit, m in zip(code_bits[32:], mask)]
+        code_bits = code_bits[:32] + [bit ^ m for bit, m in zip(code_bits[32:], mask, strict=True)]
 
     assert len(code_bits) == 8 * coded_length(frame_length), "coded length mismatch"
     return code_bits

@@ -30,9 +30,23 @@ select = [
 ignore = [
     # one of these two has to go; the tree puts the summary on the line after """
     "D213",  # multi-line-summary-second-line
-    # GNU Radio block and hierarchical block classes are named after the block they
-    # implement, which is lower case by convention throughout GNU Radio
-    "N801",
+    # The non-ASCII characters here are deliberate typography, not paste damage: a narrow
+    # no-break space between a value and its unit, an en dash in prose, and box-drawing
+    # characters in the table util.tabular_pretty_print draws.
+    "RUF001",  # ambiguous-unicode-character-string
+    "RUF002",  # ambiguous-unicode-character-docstring
+    "RUF003",  # ambiguous-unicode-character-comment
+    # A two-branch if/else is often clearer than a conditional expression, and the tree
+    # uses whichever reads better in context.
+    "SIM108",  # if-else-block-instead-of-if-exp
+    # Would require a class per message for exceptions that are raised once and read by a
+    # person; the message at the raise site is the useful place for it.
+    "TRY003",  # raise-vanilla-args
+    # These two contradict each other - one wants implicit concatenation, the other
+    # explicit - and the tree uses both styles where they read best. ISC004 is kept,
+    # because an unparenthesized concatenation inside a collection really is a trap.
+    "ISC002",  # multi-line-implicit-string-concatenation
+    "ISC003",  # explicit-string-concatenation
 ]
 
 [tool.ruff.lint.pydocstyle]

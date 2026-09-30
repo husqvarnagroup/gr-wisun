@@ -1,16 +1,13 @@
-# coding: utf-8
 #
 # Copyright (c) 2026 Gardena GmbH
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""
-Pytest tests for functions in parameters.py.
-"""
+"""Pytest tests for functions in parameters.py."""
 
 import pytest
 
-from .configuration import byte_length, ChannelMask
+from .configuration import ChannelMask, byte_length
 from .parameters import WISUN_SUPPORTED_PARAMETERS
 
 

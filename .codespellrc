@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2026 GARDENA GmbH
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[codespell]
+# requirements.txt is pip-compile output full of hashes; the rest are caches and binaries
+skip = ./build,./.git,./requirements.txt,./.ruff_cache,./.rumdl_cache,./.pytest_cache,./docs/screenshots,./docs/flowgraphs,./uv.lock

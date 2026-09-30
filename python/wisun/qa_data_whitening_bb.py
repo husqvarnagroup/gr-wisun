@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2026 GARDENA GmbH.
 #
@@ -8,9 +7,9 @@
 
 """Tests for data_whitening_bb block."""
 
-from gnuradio import gr, gr_unittest
-from gnuradio import blocks
 import pmt
+from gnuradio import blocks, gr, gr_unittest
+
 try:
     from gnuradio.wisun import data_whitening_bb
 except ImportError:

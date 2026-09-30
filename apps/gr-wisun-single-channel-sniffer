@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# coding: utf-8
 #
 # Copyright (c) 2026 Gardena GmbH
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Sniffer application to receive a single Wi-SUN channel for packet analysis with Wireshark."""
 
+import contextlib
 import os
 import signal
 import stat
@@ -14,16 +14,26 @@ from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from collections import OrderedDict
 
 import osmosdr
-from gnuradio import analog, blocks, filter, gr, pdu, wisun
-from gnuradio.fft import window
-from gnuradio.filter import firdes
-from gnuradio.wisun.configuration import (InvalidWiSunChannelPlanException, InvalidWiSunParametersException,
-                                          InvalidWiSunPhyModeException, InvalidWiSunPhyTypeException,
-                                          InvalidWiSunRegulatoryDomainException, UnsupportedWiSunChannelException,
-                                          UnsupportedWiSunPhyModeIdException, WiSunConfiguration)
-from gnuradio.wisun.parameters import (SUN_FSK_CHANNEL_PAGE, WISUN_CHANNEL_PLANS, WISUN_COUNTRY_CODES,
-                                       WISUN_FREQUENCY_BAND_802154_MAPPING, WISUN_FREQUENCY_BANDS, WISUN_PHY_MODES_FSK,
-                                       WISUN_PHY_TYPES)
+from gnuradio import blocks, gr, pdu, wisun
+from gnuradio.wisun.configuration import (
+    InvalidWiSunChannelPlanException,
+    InvalidWiSunParametersException,
+    InvalidWiSunPhyModeException,
+    InvalidWiSunPhyTypeException,
+    InvalidWiSunRegulatoryDomainException,
+    UnsupportedWiSunChannelException,
+    UnsupportedWiSunPhyModeIdException,
+    WiSunConfiguration,
+)
+from gnuradio.wisun.parameters import (
+    SUN_FSK_CHANNEL_PAGE,
+    WISUN_CHANNEL_PLANS,
+    WISUN_COUNTRY_CODES,
+    WISUN_FREQUENCY_BAND_802154_MAPPING,
+    WISUN_FREQUENCY_BANDS,
+    WISUN_PHY_MODES_FSK,
+    WISUN_PHY_TYPES,
+)
 from gnuradio.wisun.util import tabular_pretty_print
 
 RX_OFFSET_HZ = 300000
@@ -33,6 +43,7 @@ class GrWisunSingleChannelSniffer(gr.top_block):
     """Single channel sniffer main class."""
 
     def __init__(self, device_string, gain, dest_file, wisun_config):
+        """Build the flow graph for the given configuration."""
         gr.top_block.__init__(self)
         radio_config = wisun_config.radio_configuration()
 
@@ -138,7 +149,7 @@ def main():
         print("ID\tName\t\tFrequency band\t\tChannel spacing")
         print('-'*80)
         for id_ in sorted(WISUN_CHANNEL_PLANS.keys()):
-            name, spacing, f0_center_freq = WISUN_CHANNEL_PLANS[id_]
+            name, spacing, _ = WISUN_CHANNEL_PLANS[id_]
             band = WISUN_FREQUENCY_BANDS[id_]
             print(f"{id_}\t{name}\t{band[0]:.1f} - {band[1]:.1f} MHz\t{spacing / 1000:.0f} kHz")
         sys.exit(0)
@@ -199,10 +210,8 @@ def main():
 
     sniffer.start()
 
-    try:
+    with contextlib.suppress(EOFError):
         input('Press Enter to quit:\n')
-    except EOFError:
-        pass
     sniffer.stop()
     sniffer.wait()
 

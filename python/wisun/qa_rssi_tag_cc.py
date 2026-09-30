@@ -1,15 +1,16 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2026 GARDENA GmbH.
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+"""Unit tests for rssi_tag_cc block."""
+
 import math
 
-from gnuradio import gr, gr_unittest
-from gnuradio import blocks
+from gnuradio import blocks, gr, gr_unittest
+
 try:
     from gnuradio.wisun import rssi_tag_cc
 except ImportError:

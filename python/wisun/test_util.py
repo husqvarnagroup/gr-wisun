@@ -1,4 +1,3 @@
-# coding: utf-8
 #
 # Copyright (c) 2026 Gardena GmbH
 #
@@ -8,7 +7,7 @@
 
 import pytest
 
-from .util import pfb_channel_to_frequency, frequency_to_wisun_channel
+from .util import frequency_to_wisun_channel, pfb_channel_to_frequency
 
 
 @pytest.mark.parametrize('channel,n_channels,center_frequency,channel_spacing,expected_frequency', [
@@ -33,6 +32,7 @@ from .util import pfb_channel_to_frequency, frequency_to_wisun_channel
     (4, 5, 100e6, 0.1e6, 99.9e6),
 ])
 def test_pfb_channel_to_frequency(channel, n_channels, center_frequency, channel_spacing, expected_frequency):
+    """A polyphase channelizer output must map to the frequency it carries."""
     assert pfb_channel_to_frequency(channel, n_channels, center_frequency, channel_spacing) == expected_frequency
 
 
@@ -44,4 +44,5 @@ def test_pfb_channel_to_frequency(channel, n_channels, center_frequency, channel
     (863.15e6, 863.1e6, 0.1e6, None),
 ])
 def test_frequency_to_wisun_channel(frequency, channel_0_frequency, channel_spacing, expected_channel):
+    """A frequency must map to its Wi-SUN channel, or to nothing if it is not one."""
     assert frequency_to_wisun_channel(frequency, channel_0_frequency, channel_spacing) == expected_channel

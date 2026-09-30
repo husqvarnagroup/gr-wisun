@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2026 GARDENA GmbH.
 #
@@ -8,9 +7,9 @@
 
 """Hierarchical block to receive a single channel on baseband."""
 
-from gnuradio import analog, blocks, digital, gr, wisun, pdu
-from gnuradio.wisun.parameters import SUN_FSK_SFD_CODED, SUN_FSK_SFD_UNCODED
 import pmt
+from gnuradio import analog, blocks, digital, gr, pdu, wisun
+from gnuradio.wisun.parameters import SUN_FSK_SFD_CODED, SUN_FSK_SFD_UNCODED
 
 RSSI_TAG_SYMBOLS = 20  # number of symbols to evaluate per RSSI-tag; should be < preamble length
 DC_CORRECTION_SYMBOLS = 30  # number of symbols for DC correction estimation; should be < preamble length
@@ -88,7 +87,7 @@ class baseband_channel_receiver(gr.hier_block2):
 
         # if available, provide channel information to blocks
         # (this is only relevant for logging)
-        if metadata is not None and 'packet-channel-number' in metadata.keys():
+        if metadata is not None and 'packet-channel-number' in metadata:
             channel = metadata['packet-channel-number']
             self.correlate_sync_word_block.set_channel(channel)
             self.packet_data_gate_block.set_channel(channel)
