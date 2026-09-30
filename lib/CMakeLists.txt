@@ -21,6 +21,7 @@ list(APPEND wisun_sources
     power_squelch_relative_cc_impl.cc
     tag_based_dc_correction_ff_impl.cc
     pdu_add_pcapng_header_impl.cc
+    pdu_fec_decode_impl.cc
     gated_power_squelch_relative_cc_impl.cc)
 
 set(wisun_sources

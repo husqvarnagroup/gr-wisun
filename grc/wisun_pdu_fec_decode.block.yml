@@ -1,0 +1,28 @@
+# SPDX-FileCopyrightText: 2026 GARDENA GmbH
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+id: wisun_pdu_fec_decode
+label: pdu_fec_decode
+category: '[Wi-SUN]'
+
+templates:
+  imports: from gnuradio import wisun
+  make: wisun.pdu_fec_decode(${drop_invalid_frames})
+
+parameters:
+- id: drop_invalid_frames
+  label: Drop frames with invalid FCS
+  dtype: bool
+  default: 'False'
+  options: ['False', 'True']
+
+inputs:
+- domain: message
+  id: pdus
+
+outputs:
+- domain: message
+  id: pdus
+
+file_format: 1
