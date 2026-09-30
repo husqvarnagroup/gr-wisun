@@ -84,6 +84,44 @@ Note that this will execute the unit tests for signal processing
 blocks against the installed code, rather than the code in the working
 directory.
 
+Tests using recorded samples live in a separate repository,
+`gr-wisun-test-suite`. Those are the ones that say anything about how
+the receiver behaves on a real signal, including a poor one.
+
+Code checks
+===========
+
+The linters are configured in `pyproject.toml` (ruff), `.rumdl.toml`
+(Markdown), `.yamllint`, and `.codespellrc`. They are declared as a
+`uv` dependency group, so each can be run without installing anything
+first:
+
+```bash
+uv run --group dev ruff check python/ apps/gr-wisun-*
+uv run --group dev codespell
+uv run --group dev rumdl check .
+uv run --group dev yamllint .
+```
+
+The app scripts have to be named explicitly because they have no `.py`
+extension, which is why nothing linted them for a long time.
+
+These are the same four checks CI runs, along with `reuse lint` for
+licensing.
+
+Code formatting is deliberately not enforced. `.clang-format` and
+`.cmake-format.py` describe the intended C++ and CMake style and are
+worth running on code you touch:
+
+```bash
+clang-format -i lib/the_file_you_changed.cc
+```
+
+Running either across the whole tree, or adding `ruff format`, would
+mean a large mechanical diff for no benefit — and in
+`python_bindings.cc` it risks confusing the `gr_modtool` markers that
+regenerate the bindings.
+
 Examples
 ========
 

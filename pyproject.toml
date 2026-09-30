@@ -5,6 +5,16 @@
 # This file configures the development tooling only. The module itself is built and
 # installed with CMake, as described in README.md, not with a Python build backend.
 
+# Declared so that uv knows which interpreter the tooling needs. Nothing here is built or
+# published; the Python code is installed by CMake along with the rest of the module.
+[project]
+name = "gr-wisun-tooling"
+version = "0"
+requires-python = ">=3.11"
+
+[tool.uv]
+package = false
+
 [tool.ruff]
 # the project's own limit, as recorded in .editorconfig; ruff's default of 88 is narrower
 # than anything in the tree

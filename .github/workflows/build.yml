@@ -12,22 +12,39 @@ on:
 
 jobs:
   lint:
-    name: lint Python files
+    name: lint
     runs-on: ubuntu-latest
     steps:
-      - name: install flake8
-        run: pipx install flake8
       - name: checkout
-        uses: actions/checkout@v4
-      - name: run flake8
-        run: flake8 --exclude 'bindings' python/wisun
+        uses: actions/checkout@v5
+      - name: install uv
+        uses: astral-sh/setup-uv@v5
+      # The app scripts have no .py extension, so they have to be named
+      # explicitly - which is why nothing had ever linted them.
+      - name: run ruff
+        run: uv run --group dev ruff check python/ apps/gr-wisun-*
+      - name: run codespell
+        run: uv run --group dev codespell
+      - name: check Markdown
+        run: uv run --group dev rumdl check .
+      - name: check YAML
+        run: uv run --group dev yamllint .
+      # Nothing else can catch a block definition missing from the install
+      # list: the build passes and the block works from Python, it just never
+      # reaches GNU Radio Companion.
+      - name: check every block definition is installed
+        run: |
+          for yml in grc/*.block.yml; do
+            grep -q "$(basename "$yml")" grc/CMakeLists.txt \
+              || { echo "$yml is missing from grc/CMakeLists.txt"; exit 1; }
+          done
 
   build_and_test:
     name: build & test
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: install dependencies
         run: |
           sudo apt-get update
