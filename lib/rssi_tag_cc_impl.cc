@@ -7,9 +7,16 @@
 
 #include "rssi_tag_cc_impl.h"
 #include <gnuradio/io_signature.h>
+#include <algorithm>
 
 namespace gr {
 namespace wisun {
+
+/*
+ * Smallest power the dB conversion is done on, about -300 dB relative to full scale. Only
+ * a window that was muted outright reaches it, and a squelch mutes a great many.
+ */
+static const double minimum_power = 1e-30;
 
 using input_type = gr_complex;
 using output_type = gr_complex;
@@ -51,9 +58,17 @@ int rssi_tag_cc_impl::work(int noutput_items,
         d_sample_index++;
 
         if (d_sample_index == d_n_samples) {
-            /* calculate value */
-            d_rssi /= d_n_samples;            // calculate average magnitude squared
-            d_rssi = 10 * std::log10(d_rssi); // convert to dBm
+            /*
+             * Calculate the value: the mean power over the window, in dB relative to full
+             * scale. It is not dBm - nothing here knows the gain of the receiver ahead of
+             * it - which is why everything downstream compares these values against each
+             * other rather than against an absolute level.
+             *
+             * The floor keeps the conversion finite where a whole window was muted, as it
+             * is for everything a squelch rejected.
+             */
+            d_rssi /= d_n_samples;
+            d_rssi = 10 * std::log10(std::max(d_rssi, minimum_power));
 
             /* add tag */
             gr::block::add_item_tag(0,
