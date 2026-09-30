@@ -12,6 +12,7 @@
 include(GrPlatform) #define LIB_SUFFIX
 
 list(APPEND wisun_sources
+    fec.cc
     correlate_sync_word_bb_impl.cc
     packet_data_gate_bb_impl.cc
     data_whitening_bb_impl.cc
