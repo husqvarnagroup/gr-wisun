@@ -22,6 +22,7 @@ add_subdirectory(bindings)
 gr_python_install(FILES __init__.py
     baseband_channel_receiver.py
     configuration.py
+    fec.py
     parameters.py
     util.py
     single_channel_receiver.py
