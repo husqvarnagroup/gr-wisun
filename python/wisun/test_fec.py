@@ -209,6 +209,7 @@ def test_on_air_bits_starts_with_preamble_and_coded_sfd():
     """The SHR is never coded, interleaved or whitened."""
     psdu = append_fcs(b'payload')
     bits = on_air_bits(psdu, preamble_octets=8)
-    assert bits[:64] == octets_to_bits(b'\x55' * 8)
+    # the preamble runs 0101... and ends on a 1, immediately before the SFD
+    assert bits[:64] == [0, 1] * 32
     assert value_msb_first(bits[64:80]) == SFD_CODED
     assert bits[80:] == encode_frame(psdu)
