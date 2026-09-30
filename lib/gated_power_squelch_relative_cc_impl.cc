@@ -30,16 +30,12 @@ gated_power_squelch_relative_cc_impl::gated_power_squelch_relative_cc_impl(
     : gr::block("gated_power_squelch_relative_cc",
                 gr::io_signature::make(1, 1, sizeof(input_type)),
                 gr::io_signature::make(1, 1, sizeof(output_type))),
-      d_pwr(1),
-      d_noise_floor_pwr(1),
-      d_iir(alpha),
+      d_tracker(alpha, relative_threshold),
       d_output_active(false),
-      d_delay(1 / alpha),
       d_trailing_samples(trailing_samples),
       d_trailing_samples_left(0),
       d_channel(-1)
 {
-    set_relative_threshold(relative_threshold);
 }
 
 
@@ -61,16 +57,6 @@ void gated_power_squelch_relative_cc_impl::forecast(int noutput_items,
      * unprocessed.
      */
     ninput_items_required[0] = noutput_items;
-}
-
-void gated_power_squelch_relative_cc_impl::set_relative_threshold(double db)
-{
-    if (db <= 0)
-
-        throw std::out_of_range("relative_threshold db must be > 0\n");
-
-    d_relative_threshold = std::pow(10.0, db / 10);
-    d_absolute_threshold = d_noise_floor_pwr * d_relative_threshold;
 }
 
 int gated_power_squelch_relative_cc_impl::general_work(
@@ -102,19 +88,10 @@ int gated_power_squelch_relative_cc_impl::general_work(
             break;
         }
 
-        d_pwr = d_iir.filter(in[i].real() * in[i].real() + in[i].imag() * in[i].imag());
-        if (d_delay) { /* wait until filter is stable before recording lowest power */
-            d_delay--;
-            if (d_delay == 0) {
-                d_logger->debug("delay done; d_pwr is {:f}", d_pwr);
-            }
-        } else if (d_pwr < d_noise_floor_pwr) {
-            d_noise_floor_pwr = d_pwr;
-            d_absolute_threshold = d_noise_floor_pwr * d_relative_threshold;
-            noise_floor_pwr_updated = true;
-        }
+        noise_floor_pwr_updated |=
+            d_tracker.update(in[i].real() * in[i].real() + in[i].imag() * in[i].imag());
 
-        if (d_output_active && d_pwr < d_absolute_threshold) {
+        if (d_output_active && !d_tracker.above_threshold()) {
             d_output_active = false;
             d_logger->debug("signal lost (channel {:d})", d_channel);
             d_trailing_samples_left = d_trailing_samples;
@@ -131,14 +108,14 @@ int gated_power_squelch_relative_cc_impl::general_work(
             gr::block::add_item_tag(0,
                                     this->nitems_written(0) + noutput_items_created,
                                     pmt::string_to_symbol("squelch_eob"),
-                                    pmt::from_double(d_pwr));
-        } else if (!d_output_active && d_pwr >= d_absolute_threshold) {
+                                    pmt::from_double(d_tracker.power()));
+        } else if (!d_output_active && d_tracker.above_threshold()) {
             d_logger->debug("signal detected (channel {:d})", d_channel);
             d_output_active = true;
             gr::block::add_item_tag(0,
                                     this->nitems_written(0) + noutput_items_created,
                                     pmt::string_to_symbol("squelch_sob"),
-                                    pmt::from_double(d_pwr));
+                                    pmt::from_double(d_tracker.power()));
         }
 
         if (d_output_active) {
@@ -155,24 +132,9 @@ int gated_power_squelch_relative_cc_impl::general_work(
         d_logger->debug(
             "noise floor power (channel {:d}): {:.1f} dB; absolute threshold: {:.1f} dB",
             d_channel,
-            10 * std::log10(d_noise_floor_pwr),
-            10 * std::log10(d_absolute_threshold));
+            10 * std::log10(d_tracker.noise_floor()),
+            10 * std::log10(d_tracker.threshold()));
     }
-
-    d_logger->debug("channel {}: general_work(noutput_items: {}, ninput_items[0]: {}):\n"
-                    "- noutput_items_created: {}\n"
-                    "- d_output_active: {}\n"
-                    "- d_noise_floor_pwr: {:.3e}\n"
-                    "- d_absolute_threshold: {:.3e}\n"
-                    "- d_pwr: {:.3e}",
-                    d_channel,
-                    noutput_items,
-                    ninput_items[0],
-                    noutput_items_created,
-                    d_output_active,
-                    d_noise_floor_pwr,
-                    d_absolute_threshold,
-                    d_pwr);
 
     /* tell runtime system how many input items we consumed */
     consume_each(ninput_items_consumed);

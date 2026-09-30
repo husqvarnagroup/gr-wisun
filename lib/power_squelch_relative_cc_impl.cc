@@ -30,29 +30,16 @@ power_squelch_relative_cc_impl::power_squelch_relative_cc_impl(
     : gr::sync_block("power_squelch_relative_cc",
                      gr::io_signature::make(1, 1, sizeof(input_type)),
                      gr::io_signature::make(1, 1, sizeof(output_type))),
-      d_pwr(1),
-      d_noise_floor_pwr(1),
-      d_iir(alpha),
+      d_tracker(alpha, relative_threshold),
       d_output_active(false),
-      d_delay(1 / alpha),
       d_channel(-1)
 {
-    set_relative_threshold(relative_threshold);
 }
 
 /*
  * Our virtual destructor.
  */
 power_squelch_relative_cc_impl::~power_squelch_relative_cc_impl() {}
-
-void power_squelch_relative_cc_impl::set_relative_threshold(double db)
-{
-    if (db <= 0)
-        throw std::out_of_range("relative_threshold db must be > 0\n");
-
-    d_relative_threshold = std::pow(10.0, db / 10);
-    d_absolute_threshold = d_noise_floor_pwr * d_relative_threshold;
-}
 
 int power_squelch_relative_cc_impl::work(int noutput_items,
                                          gr_vector_const_void_star& input_items,
@@ -63,37 +50,28 @@ int power_squelch_relative_cc_impl::work(int noutput_items,
     bool noise_floor_pwr_updated = false;
 
     for (int i = 0; i < noutput_items; i++) {
-        d_pwr = d_iir.filter(in[i].real() * in[i].real() + in[i].imag() * in[i].imag());
-        if (d_delay) { /* wait until filter is stable before recording lowest power */
-            d_delay--;
-            if (d_delay == 0) {
-                d_logger->debug("delay done; d_pwr is {:f}", d_pwr);
-            }
-        } else if (d_pwr < d_noise_floor_pwr) {
-            d_noise_floor_pwr = d_pwr;
-            d_absolute_threshold = d_noise_floor_pwr * d_relative_threshold;
-            noise_floor_pwr_updated = true;
-        }
+        noise_floor_pwr_updated |=
+            d_tracker.update(in[i].real() * in[i].real() + in[i].imag() * in[i].imag());
 
         if (d_output_active) {
             out[i] = in[i];
 
-            if (d_pwr < d_absolute_threshold) {
+            if (!d_tracker.above_threshold()) {
                 d_output_active = false;
                 gr::block::add_item_tag(0,
                                         this->nitems_written(0) + i,
                                         pmt::string_to_symbol("squelch_eob"),
-                                        pmt::from_double(d_pwr));
+                                        pmt::from_double(d_tracker.power()));
             }
         } else {
             out[i] = 0;
 
-            if (d_pwr >= d_absolute_threshold) {
+            if (d_tracker.above_threshold()) {
                 d_output_active = true;
                 gr::block::add_item_tag(0,
                                         this->nitems_written(0) + i + 1,
                                         pmt::string_to_symbol("squelch_sob"),
-                                        pmt::from_double(d_pwr));
+                                        pmt::from_double(d_tracker.power()));
             }
         }
     }
@@ -102,8 +80,8 @@ int power_squelch_relative_cc_impl::work(int noutput_items,
         d_logger->debug(
             "noise floor power (channel {:d}): {:.1f} dB; absolute threshold: {:.1f} dB",
             d_channel,
-            10 * std::log10(d_noise_floor_pwr),
-            10 * std::log10(d_absolute_threshold));
+            10 * std::log10(d_tracker.noise_floor()),
+            10 * std::log10(d_tracker.threshold()));
     }
 
     // Tell runtime system how many output items we produced.

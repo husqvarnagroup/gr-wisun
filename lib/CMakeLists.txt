@@ -11,18 +11,20 @@
 ########################################################################
 include(GrPlatform) #define LIB_SUFFIX
 
+# keep this list sorted, so that a missing entry is easy to spot
 list(APPEND wisun_sources
-    fec.cc
     correlate_sync_word_bb_impl.cc
-    packet_data_gate_bb_impl.cc
     data_whitening_bb_impl.cc
+    fec.cc
+    gated_power_squelch_relative_cc_impl.cc
+    noise_floor_tracker.cc
+    packet_data_gate_bb_impl.cc
     pdu_add_pcap_header_impl.cc
-    rssi_tag_cc_impl.cc
-    power_squelch_relative_cc_impl.cc
-    tag_based_dc_correction_ff_impl.cc
     pdu_add_pcapng_header_impl.cc
     pdu_fec_decode_impl.cc
-    gated_power_squelch_relative_cc_impl.cc)
+    power_squelch_relative_cc_impl.cc
+    rssi_tag_cc_impl.cc
+    tag_based_dc_correction_ff_impl.cc)
 
 set(wisun_sources
     "${wisun_sources}"

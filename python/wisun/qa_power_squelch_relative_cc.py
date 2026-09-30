@@ -68,6 +68,31 @@ class qa_power_squelch_relative_cc(gr_unittest.TestCase):
         self.assertEqual(tag_eob.offset, 20)
         self.assertAlmostEqual(float(str(tag_eob.value)), 0)
 
+    def test_002_squelch_closes_again_after_the_noise_floor_rises(self):
+        """A risen noise floor must be picked up, so that the squelch closes again.
+
+        The noise floor used to be the lowest power seen since the flow graph started, which
+        can never recover from a reading that is too low: once the real noise rises above the
+        threshold derived from it, the squelch stays open for the rest of the run. That costs
+        more than the squelch itself, because tag_based_dc_correction_ff re-estimates only
+        when a burst tag arrives, and an open squelch stops producing them.
+        """
+        # a brief very quiet stretch sets a low floor, then the noise floor rises by 60 dB
+        # and stays there; nothing here is a burst, so the squelch has no business being open
+        quiet = [1e-9] * 100
+        risen = [1e-6] * 30000
+        src = blocks.vector_source_c(tuple(quiet + risen))
+        blk = power_squelch_relative_cc(30, 1)
+        dst = blocks.vector_sink_c()
+        self.tb.connect(src, blk, dst)
+        self.tb.run()
+
+        keys = [str(tag.key) for tag in dst.tags()]
+        self.assertEqual(keys.count("squelch_sob"), 1, "the risen noise should open it once")
+        self.assertEqual(keys.count("squelch_eob"), 1, "and it must then close again")
+        # once closed it must stay closed, so the tail of the output is muted
+        self.assertEqual(dst.data()[-1], 0)
+
 
 if __name__ == '__main__':
     gr_unittest.run(qa_power_squelch_relative_cc)
