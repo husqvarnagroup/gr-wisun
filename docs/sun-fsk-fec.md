@@ -17,6 +17,13 @@ recovers nothing at all.
 References are to IEEE 802.15.4-2020 unless stated otherwise. Nothing
 below is specific to a transceiver or to that sniffer's firmware.
 
+This is now implemented here: the bit manipulation is in `lib/fec.cc`,
+the header decode in `correlate_sync_word_bb`, and the frame decode in
+`pdu_fec_decode`, with a reference encoder in `python/wisun/fec.py`. One
+claim below has been corrected against traffic from a second transmitter
+in the course of that — see "The padding value is not something to rely
+on".
+
 
 Which operating modes are coded
 -------------------------------
@@ -153,20 +160,37 @@ neither.
 Termination is a zero tail: 3 zero bits, which return the encoder to the
 zero state because the code is non-recursive. Note that the padding
 described below follows the tail rather than preceding it, so the tail
-alone does not leave the encoder terminated — the padding bits are zeros
-too, which is what keeps it in the zero state through to the last symbol.
+alone does not leave the encoder terminated.
 
-That the padding really is zero-valued is worth stating because it is
-load-bearing and easy to assume either way: it was confirmed empirically,
-in that real frames decode with *no* corrections against a reference
-encoder that pads with zeros, which they would not if the transmitter
+### The padding value is not something to rely on
+
+**A decoder must trace back from the best surviving state, not from state
+0.** The padding bits that follow the tail are not necessarily zeros, so
+the encoder is not necessarily back in the zero state when the frame
+ends.
+
+The traffic this document was first written from padded with zeros: real
+frames decoded with *no* corrections against a reference encoder that
+padded with zeros, which they would not have if that transmitter had
 padded with anything else.
 
-A decoder may therefore trace back from state 0 at the end of a complete
-frame. Tracing back from the best surviving state instead gives the same
-answer on a clean frame and is more forgiving on a damaged one, so it is
-the safer default; it also lets the same traceback serve the early,
-unterminated header decode described further down.
+Frames from a second transmitter, recorded later with this module and
+kept as the coded samples in the `gr-wisun-test-suite` repository, pad
+with **ones**. The evidence is the same in form and just as strong:
+re-encoding each decoded frame against the received code symbols gives
+zero mismatches with all-ones padding, and 6 or 14 mismatches — one per
+padding bit, plus the tail of the trellis — with zero padding. Those
+frames end in state 7, and tracing back from state 0 costs a path metric
+of 4 on an otherwise perfect frame.
+
+So the padding value is a property of the transmitter rather than of the
+PHY, and nothing may be concluded from the tail and padding bits of a
+received frame. Tracing back from the best surviving state costs nothing,
+is more forgiving on a damaged frame, and lets the same traceback serve
+the early, unterminated header decode described further down. Tracing
+back from state 0 instead does not merely lose the last three bits, which
+are discarded anyway — it inflates the path metric, and the metric is the
+one oracle worth trusting (see below).
 
 
 Padding and length arithmetic
@@ -310,11 +334,12 @@ Receiving, end to end
 3. Take the Frame Length from the PHR, compute `coded_len`, and collect
    that many octets in total.
 4. De-whiten octets 4 onwards, PN9 from its seed.
-5. Deinterleave every block; Viterbi decode the lot. The frame ends in
-   the zero state, so state 0 and the best surviving state are the same
-   thing on a clean frame; prefer the latter.
+5. Deinterleave every block; Viterbi decode the lot, tracing back from
+   the best surviving state — the frame does not necessarily end in the
+   zero state, because the padding bits are not necessarily zeros.
 6. Drop the first two decoded octets — the header, already read — and
-   the tail and padding at the end. What remains is the PSDU.
+   the tail and padding at the end. What remains is the PSDU. Do not
+   check the tail and padding bits against anything.
 7. Check the FCS as usual.
 
 
@@ -416,4 +441,7 @@ nothing, or nearly nothing:
       stops halfway through every frame.
 - [ ] Traceback walking one stage too far — subtle, length-dependent, and
       caught only by the single-bit-error sweep.
+- [ ] Traceback from state 0 rather than from the best surviving state —
+      a path metric of 4 on every clean frame from a transmitter that
+      pads with ones, which ruins the metric as an oracle.
 - [ ] Trusting a 16-bit FCS alone to say a frame was real.

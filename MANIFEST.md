@@ -25,10 +25,14 @@ Wi-SUN (more specifically the SUN FSK PHY specified in section 19 of
 IEEE 802.15.4-2020). It allows sniffing Wi-SUN packets and feeding
 them to Wireshark.
 
+Both plain FSK (Wi-SUN PHY type 0) and FSK with NRNSC forward error
+correction (PHY type 1) can be received.
+
 At the moment, this is mostly a proof-of-concept and comes with the
 following limitations:
 - only FSK modulation is supported (no OFDM)
 - only receiving is supported (packet sending not implemented)
+- a receiver handles either coded or uncoded packets, not both at once
 - performance is not optimized (in particular the clock
   synchronization could use more tuning)
 
