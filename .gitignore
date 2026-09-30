@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2026 GARDENA GmbH
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# out-of-source build directory, as described in README.md
+/build/
+
+# tool caches
+/.pytest_cache/
+/.ruff_cache/
+/.rumdl_cache/
+__pycache__/
+*.py[cod]
+
+# uv creates these when the dev dependency group is installed
+/.venv/
+/uv.lock

@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2026 GARDENA GmbH
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+extends: default
+
+rules:
+  # 80 columns, as for the rest of the project's YAML
+  line-length:
+    max: 80
+  # GRC block definitions put their sequences at the same indent as the
+  # key they belong to. That is how every .block.yml in GNU Radio is
+  # written, so it is the convention to follow rather than a mistake.
+  indentation:
+    indent-sequences: consistent
+  # none of the YAML here is a multi-document stream
+  document-start: disable
+  # "on:" is a GitHub Actions key, not the boolean it looks like
+  truthy:
+    check-keys: false
+
+ignore: |
+  build/
+  # the conda recipe is the upstream GNU Radio template, and is
+  # Jinja2-templated, so it is not valid YAML in the first place
+  .conda/
