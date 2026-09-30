@@ -12,10 +12,18 @@ Wi-SUN (more specifically the SUN FSK PHY specified in section 19 of
 IEEE 802.15.4-2020). It allows sniffing Wi-SUN packets and feeding
 them to Wireshark.
 
+Both plain FSK (Wi-SUN PHY type 0) and FSK with NRNSC forward error
+correction (PHY type 1, i.e. PhyModeID 0x11, 0x13 or 0x15) can be
+received. The coded PHY is described in
+[docs/sun-fsk-fec.md](docs/sun-fsk-fec.md).
+
 At the moment, this is mostly a proof-of-concept and comes with the
 following limitations:
 - only FSK modulation is supported (no OFDM)
 - only receiving is supported (packet sending not implemented)
+- a receiver handles either coded or uncoded packets, not both at
+  once: coding is signalled purely by which start-of-frame delimiter
+  the transmitter sends, and a receiver is locked to one of the two
 - performance is not optimized (in particular the clock
   synchronization could use more tuning)
 
@@ -152,6 +160,14 @@ index 0.5):
 
 ```
 gr-wisun-multi-channel-sniffer -r EU -p 33 -t 0 -m 3
+```
+
+To receive the same channels with forward error correction instead,
+use PHY type 1 (FSK with NRNSC FEC). Nothing below the bits differs, so
+symbol rate, modulation index and channel spacing stay as they are:
+
+```
+gr-wisun-multi-channel-sniffer -r EU -p 33 -t 1 -m 3
 ```
 
 In a separate terminal:
