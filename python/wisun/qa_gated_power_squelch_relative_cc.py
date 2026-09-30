@@ -62,8 +62,35 @@ class qa_gated_power_squelch_relative_cc(gr_unittest.TestCase):
         self.assertAlmostEqual(float(str(tag_sob.value)), 1)
         tag_eob = tags[1]
         self.assertEqual(str(tag_eob.key), "squelch_eob")
-        self.assertEqual(tag_eob.offset, 9)
+        # the first item that is no longer signal, i.e. the first trailing zero; this is
+        # the counterpart of squelch_sob naming the first item that is signal
+        self.assertEqual(tag_eob.offset, 10)
         self.assertAlmostEqual(float(str(tag_eob.value)), 0)
+
+    def test_002_output_is_correct_when_output_space_is_the_limit(self):
+        """A long open burst must pass through intact however little output space there is.
+
+        The scheduler hands over every input item available and bounds only noutput_items,
+        so an open squelch routinely has far more to pass on than there is room for. The
+        block used to write all of it regardless, running past the end of the output buffer
+        by a factor of a hundred or more; keeping to the buffer means the input it did not
+        get to must stay unconsumed, or samples go missing instead.
+        """
+        n_signal = 20000
+        # quiet first, so the noise floor settles below the burst
+        src_data = tuple([1e-9] * 2000 + [1] * n_signal)
+        src = blocks.vector_source_c(src_data)
+        blk = gated_power_squelch_relative_cc(30, 1, 3)
+        dst = blocks.vector_sink_c()
+        self.tb.connect(src, blk, dst)
+        # only this block is throttled, so its input piles up far beyond its output space
+        blk.set_max_noutput_items(16)
+        self.tb.run()
+
+        # every signal sample, exactly once, and nothing from the quiet stretch
+        result = dst.data()
+        self.assertEqual(len(result), n_signal)
+        self.assertComplexTuplesAlmostEqual(result, tuple([1] * n_signal), places=10)
 
 
 if __name__ == '__main__':

@@ -51,9 +51,16 @@ gated_power_squelch_relative_cc_impl::~gated_power_squelch_relative_cc_impl() {}
 void gated_power_squelch_relative_cc_impl::forecast(int noutput_items,
                                                     gr_vector_int& ninput_items_required)
 {
-    /* we produce a lot fewer samples than we get, but the actual ratio depends on the
-     * number of packets received, so no way to predict */
-    ninput_items_required[0] = noutput_items * 10;
+    /*
+     * We usually produce a lot fewer items than we get, and by how much depends on how
+     * much of the input held a signal, so there is no ratio to predict. What is certain
+     * is that an item is never produced out of nothing, so producing noutput_items needs
+     * at least that many input items - and asking for any more than that is harmful:
+     * forecast is a minimum the scheduler has to satisfy before it will run the block at
+     * all, so demanding a multiple of it leaves the last few items of a stream
+     * unprocessed.
+     */
+    ninput_items_required[0] = noutput_items;
 }
 
 void gated_power_squelch_relative_cc_impl::set_relative_threshold(double db)
@@ -76,8 +83,25 @@ int gated_power_squelch_relative_cc_impl::general_work(
     auto out = static_cast<output_type*>(output_items[0]);
     bool noise_floor_pwr_updated = false;
     int noutput_items_created = 0;
+    int ninput_items_consumed = 0;
 
     for (int i = 0; i < ninput_items[0]; i++) {
+        /*
+         * Stop once the output buffer is full. The scheduler hands over every input item
+         * that is available and bounds only noutput_items; it never reduces ninput_items
+         * to fit the output buffer. An open squelch passes nearly everything through, so
+         * whenever the downstream is backed up while input has piled up - the normal
+         * state of affairs in the multi-channel receiver - this loop used to write past
+         * the end of the output buffer.
+         *
+         * The check has to come before the sample is touched: processing it advances the
+         * power estimate and the squelch state, so a sample whose output does not fit
+         * must not be processed at all, or it would be processed twice.
+         */
+        if (noutput_items_created == noutput_items) {
+            break;
+        }
+
         d_pwr = d_iir.filter(in[i].real() * in[i].real() + in[i].imag() * in[i].imag());
         if (d_delay) { /* wait until filter is stable before recording lowest power */
             d_delay--;
@@ -94,8 +118,18 @@ int gated_power_squelch_relative_cc_impl::general_work(
             d_output_active = false;
             d_logger->debug("signal lost (channel {:d})", d_channel);
             d_trailing_samples_left = d_trailing_samples;
+            /*
+             * Tag the first item that is no longer signal, which is the first trailing
+             * zero. Tagging the item before it named the last item that *was* signal,
+             * which is both the opposite of what squelch_sob does and one item too early
+             * for the consumer: tag_based_dc_correction_ff takes this offset as the end
+             * of the usable range, so it used to stop correcting one sample before the
+             * signal actually ended. It also put the tag one item behind the range the
+             * call produced whenever a burst ended on the first input sample of a call,
+             * which happens routinely because the block stays open across calls.
+             */
             gr::block::add_item_tag(0,
-                                    this->nitems_written(0) + noutput_items_created - 1,
+                                    this->nitems_written(0) + noutput_items_created,
                                     pmt::string_to_symbol("squelch_eob"),
                                     pmt::from_double(d_pwr));
         } else if (!d_output_active && d_pwr >= d_absolute_threshold) {
@@ -113,6 +147,8 @@ int gated_power_squelch_relative_cc_impl::general_work(
             out[noutput_items_created++] = 0;
             d_trailing_samples_left--;
         }
+
+        ninput_items_consumed++;
     }
 
     if (noise_floor_pwr_updated) {
@@ -139,7 +175,7 @@ int gated_power_squelch_relative_cc_impl::general_work(
                     d_pwr);
 
     /* tell runtime system how many input items we consumed */
-    consume_each(ninput_items[0]);
+    consume_each(ninput_items_consumed);
 
     /* tell runtime system how many output items we produced. */
     return noutput_items_created;
