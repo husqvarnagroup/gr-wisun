@@ -134,6 +134,30 @@ class qa_packet_data_gate_bb(gr_unittest.TestCase):
         self.assertEqual(tag2.offset, 16)
         self.assertEqual(int(str(tag2.value)), 1)
 
+    def test_00x_large_packet_with_little_output_space(self):
+        """A packet larger than the output space must come through intact, in order.
+
+        The number of bits to pass on comes from the packet length and can be many thousands,
+        while the output space available is whatever the downstream has left. The block used
+        to copy the whole packet regardless of that, running past the end of the output
+        buffer; copying only what fits means the rest must stay unconsumed for the next call.
+        """
+        packet_octets = 2000
+        packet_bits = 8 * packet_octets
+        # a recognisable pattern, so a duplicated or dropped stretch cannot go unnoticed
+        payload = [(i % 2) for i in range(packet_bits)]
+        src_data = tuple([0] * 10 + payload + [0] * 10)
+        src = blocks.vector_source_b(src_data,
+                                     tags=(make_tag("wisun-packet", packet_octets, 10),))
+        blk = packet_data_gate_bb("wisun-packet")
+        dst = blocks.vector_sink_b()
+        self.tb.connect(src, blk, dst)
+        # only this block is throttled, so its input piles up far beyond its output space
+        blk.set_max_noutput_items(16)
+        self.tb.run()
+
+        self.assertEqual(list(dst.data()), payload)
+
 
 if __name__ == '__main__':
     gr_unittest.run(qa_packet_data_gate_bb)

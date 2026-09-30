@@ -7,6 +7,7 @@
 
 #include "packet_data_gate_bb_impl.h"
 #include <gnuradio/io_signature.h>
+#include <algorithm>
 
 namespace gr {
 namespace wisun {
@@ -63,9 +64,16 @@ packet_data_gate_bb_impl::~packet_data_gate_bb_impl() {}
 void packet_data_gate_bb_impl::forecast(int noutput_items,
                                         gr_vector_int& ninput_items_required)
 {
-    /* we produce a lot fewer samples than we get, but the actual ratio depends on the
-     * number of packets received, so no way to predict */
-    ninput_items_required[0] = noutput_items * 10;
+    /*
+     * We usually produce a lot fewer items than we get, and by how much depends on how
+     * many packets the input held, so there is no ratio to predict. What is certain is
+     * that an item is never produced out of nothing, so producing noutput_items needs at
+     * least that many input items - and asking for any more than that is harmful:
+     * forecast is a minimum the scheduler has to satisfy before it will run the block at
+     * all, so demanding a multiple of it leaves the last few items of a stream
+     * unprocessed.
+     */
+    ninput_items_required[0] = noutput_items;
 }
 
 int packet_data_gate_bb_impl::general_work(int noutput_items,
@@ -96,8 +104,15 @@ int packet_data_gate_bb_impl::general_work(int noutput_items,
         /* nothing was produced */
         return 0;
     } else { /* process as many samples as possible */
-        /* determine number of samples to process */
-        int num_to_process = std::min(d_remaining_samples, ninput_items[0]);
+        /*
+         * Determine number of samples to process. The output buffer bounds this as much
+         * as the input does: the scheduler hands over every input item available and
+         * never reduces ninput_items to fit the output buffer, so leaving noutput_items
+         * out of this used to write past the end of the buffer whenever a packet's worth
+         * of bits was waiting and the downstream was backed up.
+         */
+        int num_to_process =
+            std::min({ d_remaining_samples, ninput_items[0], noutput_items });
         int current_tag_offset = nitems_read(0) - nitems_written(0);
         /* propagate tags manually, adjusting offset */
         get_tags_in_range(tags, 0, nitems_read(0), nitems_read(0) + num_to_process);
@@ -108,11 +123,6 @@ int packet_data_gate_bb_impl::general_work(int noutput_items,
             /* handle RSSI tags separately (to add new tag "packet-rssi") */
             if (pmt::equal(t.key, pmt::string_to_symbol("rssi"))) {
                 double rssi = pmt::to_double(t.value);
-                // std::cerr << "RSSI tag: "
-                //           << std::to_string(pmt::to_double(t.value))
-                //           << " dB; offset within packet " << std::to_string(t.offset -
-                //           d_current_packet_absolute_offset)
-                //           << ")" << std::endl;
                 if (!d_packet_rssi_tag_done) {
                     /*
                      * We use the second RSSI tag as RSSI for whole packet. Since the
@@ -124,7 +134,6 @@ int packet_data_gate_bb_impl::general_work(int noutput_items,
                     if (!d_packet_rssi_first_tag_discarded) {
                         d_packet_rssi_first_tag_discarded = true;
                     } else {
-                        // std::cout << "adding as packet RSSI tag" << std::endl;
                         gr::block::add_item_tag(0,
                                                 this->nitems_written(0),
                                                 pmt::string_to_symbol("packet-rssi"),
@@ -135,10 +144,13 @@ int packet_data_gate_bb_impl::general_work(int noutput_items,
                 } else if (!d_packet_rssi_threshold_warning_done &&
                            rssi < d_packet_rssi - phy_relative_rssi_threshold) {
                     /* warn (once per packet) if RSSI below threshold */
-                    int low_rssi_offset = t.offset - d_current_packet_absolute_offset;
+                    int64_t low_rssi_offset =
+                        (int64_t)(t.offset - d_current_packet_absolute_offset);
                     d_logger->warn("low RSSI during packet data (channel: {:d}, "
                                    "RSSI: {:f}, bit offset: {:d})",
-                                   d_channel, rssi, low_rssi_offset);
+                                   d_channel,
+                                   rssi,
+                                   low_rssi_offset);
                     d_packet_rssi_threshold_warning_done = true;
                     gr::block::add_item_tag(0,
                                             t.offset,

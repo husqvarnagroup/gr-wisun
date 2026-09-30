@@ -21,7 +21,7 @@ private:
     bool d_packet_rssi_tag_done;
     bool d_packet_rssi_first_tag_discarded;
     bool d_packet_rssi_threshold_warning_done;
-    int d_current_packet_absolute_offset;
+    uint64_t d_current_packet_absolute_offset;
     double d_packet_rssi;
     int16_t d_channel;
 
