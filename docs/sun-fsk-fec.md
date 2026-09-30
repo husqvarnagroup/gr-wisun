@@ -24,7 +24,6 @@ claim below has been corrected against traffic from a second transmitter
 in the course of that — see "The padding value is not something to rely
 on".
 
-
 Which operating modes are coded
 -------------------------------
 
@@ -50,7 +49,6 @@ FEC is optional and additive in the FAN profile: a network may use it,
 and if it does, every frame on that PHY is coded. ChanPlanID 33 (EU)
 pairs with PhyModeID 0x03/0x13/0x05/0x15, which is the pairing the coded
 traffic measured here used (ChanPlanID 33, PhyModeID 0x13, channel 0).
-
 
 How a coded frame announces itself
 ----------------------------------
@@ -78,7 +76,6 @@ Two consequences worth designing around:
 - The PHR that follows is *inside* the coded block, so it cannot be read
   until some decoding has happened. See below — this turns out to be
   cheap, not expensive.
-
 
 The order the transmitter does things — the central fact
 --------------------------------------------------------
@@ -134,7 +131,6 @@ built on that reading hands whitened symbols to a Viterbi decoder, which
 cannot distinguish them from noise, so every experiment comes back empty
 for the right reason and the wrong cause.
 
-
 The convolutional code
 ----------------------
 
@@ -145,7 +141,7 @@ no library is warranted.
 With `b(i)` the current input bit and `b(i-1)`, `b(i-2)`, `b(i-3)` the
 three previous ones:
 
-```
+```text
 u1(i) = NOT ( b(i) XOR b(i-2) XOR b(i-3) )          G1 = 1 + x^2 + x^3
 u0(i) = NOT ( b(i) XOR b(i-1) XOR b(i-2) XOR b(i-3) )   G0 = 1 + x + x^2 + x^3
 ```
@@ -192,7 +188,6 @@ back from state 0 instead does not merely lose the last three bits, which
 are discarded anyway — it inflates the path metric, and the metric is the
 one oracle worth trusting (see below).
 
-
 Padding and length arithmetic
 -----------------------------
 
@@ -204,7 +199,7 @@ is even.
 
 That makes the on-air length a closed form:
 
-```
+```text
 octets    = psdu_len + 2                      # PSDU plus the 2-octet PHR
 info_bits = (octets + (1 if octets odd else 2)) * 8
 coded_len = info_bits * 2 / 8                 # octets on air, rate 1/2
@@ -230,14 +225,13 @@ half the payload throughput of its uncoded counterpart — the ratio
 approaches 2.00 as frames grow, with the overhead above that being the
 PHR, tail and padding.
 
-
 The interleaver
 ---------------
 
 A block interleaver over 16 code symbols — 32 coded bits — permuting
 whole symbols rather than individual bits (19.3.6):
 
-```
+```text
 q(p)(k) = a(p)(t),   t = 15 - 4*(k mod 4) - floor(k/4)
 ```
 
@@ -262,7 +256,6 @@ the block — so trace back from the best surviving path instead of from
 state 0. With three memory elements the survivors have long since merged,
 so the result is the same 16 bits the eventual full decode produces.
 
-
 Whitening (PN9)
 ---------------
 
@@ -271,7 +264,7 @@ Generator `x^9 + x^5 + 1`, seeded all ones (`0x1FF`), per 16.2.3.
 **The bit that comes out is the feedback term itself, `b0 XOR b5`, not a
 bit of the register.** That is what makes the sequence open
 
-```
+```text
 0000 1111 0111 ...
 ```
 
@@ -288,7 +281,6 @@ needs two changes to serve here: it must run on the *code symbols* rather
 than on decoded data, and it must skip the first 4 octets before starting
 the generator.
 
-
 Bit order
 ---------
 
@@ -300,7 +292,6 @@ bits the way the PSDU's are read and a real header `0x088E` comes out as
 
 It is worth returning a decoded PHR as a 16-bit value rather than as two
 octets, since there is no octet order that is not a trap for someone.
-
 
 PHY header fields
 -----------------
@@ -323,7 +314,6 @@ FCS-32 is the ordinary Ethernet CRC-32 — reflected, seeded and inverted
 with all ones — transmitted least-significant octet first. FCS-16 is
 ITU-T CRC-16 seeded with zeroes.
 
-
 Receiving, end to end
 ---------------------
 
@@ -341,7 +331,6 @@ Receiving, end to end
    the tail and padding at the end. What remains is the PSDU. Do not
    check the tail and padding bits against anything.
 7. Check the FCS as usual.
-
 
 Verifying an implementation
 ---------------------------
@@ -400,7 +389,6 @@ All of this is pure bit manipulation and needs no radio:
 The standard prints no full worked FEC test vector, so there is nothing
 to check against but self-consistency and real traffic.
 
-
 Timing, for a sniffer that wants whole exchanges
 ------------------------------------------------
 
@@ -420,7 +408,6 @@ Whether an acknowledgement is expected at all is readable from the MAC
 frame control field: bit 5 is the Ack Request bit. It is worth checking
 before concluding a frame has gone missing — much of the background
 traffic on a FAN network is broadcast and is never acknowledged.
-
 
 Pitfall checklist
 -----------------

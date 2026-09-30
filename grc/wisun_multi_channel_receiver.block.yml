@@ -8,7 +8,9 @@ category: '[Wi-SUN]'
 
 templates:
   imports: from gnuradio import wisun
+  # yamllint disable rule:line-length
   make: wisun.multi_channel_receiver(${sample_rate}, ${center_frequency}, ${channel_0_frequency}, ${channel_spacing}, ${symbol_rate}, ${channels})
+  # yamllint enable rule:line-length
 
 parameters:
 - id: sample_rate

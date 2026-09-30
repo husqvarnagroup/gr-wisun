@@ -19,6 +19,7 @@ received. The coded PHY is described in
 
 At the moment, this is mostly a proof-of-concept and comes with the
 following limitations:
+
 - only FSK modulation is supported (no OFDM)
 - only receiving is supported (packet sending not implemented)
 - a receiver handles either coded or uncoded packets, not both at
@@ -30,13 +31,12 @@ following limitations:
 That said, integration with Wireshark works well, and the sniffer is
 fully functional.
 
-
 Building & Installation
 =======================
 
 To build `gr-wisun`, run these commands:
 
-```
+```bash
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=/path/to/install-dir ..
@@ -45,7 +45,7 @@ make
 
 Once built, installing is done with:
 
-```
+```bash
 make install
 sudo ldconfig
 ```
@@ -57,26 +57,26 @@ The directory `python/wisun` contains unit tests for each block. They
 can be executed with the following command (after doing the
 build-steps above):
 
-```
+```bash
 make test
 ```
 
 An individual test can be executed with `ctest`, e.g.:
 
-```
+```bash
 ctest --output-on-failure -R rssi_tag_cc
 ```
 
 Tests for Python code are implemented with pytest and can be executed
 with:
 
-```
+```bash
 pytest
 ```
 
 `pytest` can also be used to execute all tests at once:
 
-```
+```bash
 pytest python/wisun/{qa,test}_*.py
 ```
 
@@ -113,7 +113,6 @@ Packets should now be visible in the GUI and in Wireshark:
 <img src="docs/screenshots/simple_sniffer_gui.png" alt="Simple Sniffer GUI" width="600"/>
 <img src="docs/screenshots/simple_sniffer_wireshark.png" alt="Wireshark" width="600"/>
 
-
 Applications
 ============
 
@@ -129,21 +128,20 @@ automatically if necessary.
 Example usage - receive packets on channel 7 (EU, channel plan 32, PHY
 type 0, PHY mode 1):
 
-```
+```bash
 mkfifo /tmp/gr-wisun-sniffer
 gr-wisun-single-channel-sniffer --gain 40 -r EU -p 32 -t 0 -m 1 -c 7 --dest-file /tmp/gr-wisun-sniffer
 ```
 
 In a separate terminal:
 
-```
+```bash
 wireshark -k -i /tmp/gr-wisun-sniffer
 ```
 
 Note: the gain is somewhat critical. If performance is poor, it may
 help to check with a GUI application (e.g. `osmomocom_fft`) first and
 experiment with different gain settings.
-
 
 gr-wisun-multi-channel-sniffer
 ------------------------------
@@ -158,7 +156,7 @@ Example usage - receive all channels for EU channel plan 33 with PHY
 type 0 (FSK without FEC) and PHY mode 3 (2-FSK, 100 kbps, modulation
 index 0.5):
 
-```
+```bash
 gr-wisun-multi-channel-sniffer -r EU -p 33 -t 0 -m 3
 ```
 
@@ -166,13 +164,13 @@ To receive the same channels with forward error correction instead,
 use PHY type 1 (FSK with NRNSC FEC). Nothing below the bits differs, so
 symbol rate, modulation index and channel spacing stay as they are:
 
-```
+```bash
 gr-wisun-multi-channel-sniffer -r EU -p 33 -t 1 -m 3
 ```
 
 In a separate terminal:
 
-```
+```bash
 wireshark -k -i /tmp/gr-wisun-sniffer
 ```
 
@@ -193,7 +191,6 @@ The following screenshot shows a train of PAN advertisements in the
 waterfall plot:
 <img src="docs/screenshots/sniffer_gui.png" alt="Sniffer GUI" width="800"/>
 
-
 gr-wisun-multi-mode-multi-channel-sniffer
 -----------------------------------------
 
@@ -212,13 +209,13 @@ and must satisfy the following conditions for all selected modes:
 
 Example use to receive two Wi-SUN modes in the 868 MHz band:
 
-```
+```bash
 gr-wisun-multi-mode-multi-channel-sniffer -s 8e6 -f 866.1e6 -r EU  -m 32,0,1 -m 33,0,3
 ```
 
 In a separate terminal:
 
-```
+```bash
 wireshark -k -i /tmp/gr-wisun-sniffer
 ```
 

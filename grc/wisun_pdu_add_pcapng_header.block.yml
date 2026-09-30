@@ -8,7 +8,9 @@ category: '[Wi-SUN]'
 
 templates:
   imports: from gnuradio import wisun
+  # yamllint disable rule:line-length
   make: wisun.pdu_add_pcapng_header(${prepend_section_header_block}, ${prepend_interface_description_block}, ${use_tap_dlt})
+  # yamllint enable rule:line-length
 
 parameters:
 - id: prepend_section_header_block

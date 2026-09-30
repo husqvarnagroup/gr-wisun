@@ -8,7 +8,9 @@ category: '[Wi-SUN]'
 
 templates:
   imports: from gnuradio import wisun
+  # yamllint disable rule:line-length
   make: wisun.tag_based_dc_correction_ff(${signal_start_tag}, ${signal_end_tag}, ${estimation_length})
+  # yamllint enable rule:line-length
 
 parameters:
 - id: signal_start_tag

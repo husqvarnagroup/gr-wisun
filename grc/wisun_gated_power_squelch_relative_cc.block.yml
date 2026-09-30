@@ -8,7 +8,9 @@ category: '[Wi-SUN]'
 
 templates:
   imports: from gnuradio import wisun
+  # yamllint disable rule:line-length
   make: wisun.gated_power_squelch_relative_cc(${relative_threshold}, ${alpha}, ${trailing_samples})
+  # yamllint enable rule:line-length
 
 parameters:
 - id: relative_threshold
