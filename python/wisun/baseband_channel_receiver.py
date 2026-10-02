@@ -75,7 +75,9 @@ class baseband_channel_receiver(gr.hier_block2):
             'wisun-packet', HEADER_BITS_CODED if self._fec else HEADER_BITS_UNCODED)
         self.unpacked_to_packed_block = blocks.unpacked_to_packed_bb(1, gr.GR_LSB_FIRST)
         self.tagged_stream_to_pdu_block = pdu.tagged_stream_to_pdu(gr.types.byte_t, 'wisun-packet')
-        self.fec_decode_block = wisun.pdu_fec_decode() if self._fec else None
+        # both branches validate the frame check sequence before metadata tagging;
+        # the coded one as a side effect of decoding, the uncoded one as its only job
+        self.fcs_block = wisun.pdu_fec_decode() if self._fec else wisun.pdu_fcs_check()
         self.metadata_blocks = []
 
         for key in self._metadata:
@@ -109,9 +111,9 @@ class baseband_channel_receiver(gr.hier_block2):
         self.connect((self.data_whitening_block, 0), (self.unpacked_to_packed_block, 0))
         self.connect((self.unpacked_to_packed_block, 0), (self.tagged_stream_to_pdu_block, 0))
         self.message_port_register_hier_out('pdus')
-        # the FEC decoding happens per packet in the message domain, which keeps it off the
-        # path that acquires the next packet
-        message_blocks = ([] if self.fec_decode_block is None else [self.fec_decode_block]) + self.metadata_blocks
+        # FEC decoding and FCS checking happen per packet in the message domain, which
+        # keeps them off the path that acquires the next packet
+        message_blocks = [self.fcs_block, *self.metadata_blocks]
         previous_block = self.tagged_stream_to_pdu_block
         for block in message_blocks:
             self.msg_connect((previous_block, 'pdus'), (block, 'pdus'))

@@ -16,6 +16,7 @@ install(FILES
     wisun_packet_data_gate_bb.block.yml
     wisun_pdu_add_pcap_header.block.yml
     wisun_pdu_add_pcapng_header.block.yml
+    wisun_pdu_fcs_check.block.yml
     wisun_pdu_fec_decode.block.yml
     wisun_power_squelch_relative_cc.block.yml
     wisun_rssi_tag_cc.block.yml
