@@ -31,6 +31,7 @@ namespace py = pybind11;
     void bind_pdu_add_pcapng_header(py::module& m);
     void bind_gated_power_squelch_relative_cc(py::module& m);
     void bind_pdu_fec_decode(py::module& m);
+    void bind_pdu_fcs_check(py::module& m);
 // ) END BINDING_FUNCTION_PROTOTYPES
 
 
@@ -69,5 +70,6 @@ PYBIND11_MODULE(wisun_python, m)
     bind_pdu_add_pcapng_header(m);
     bind_gated_power_squelch_relative_cc(m);
     bind_pdu_fec_decode(m);
+    bind_pdu_fcs_check(m);
     // ) END BINDING_FUNCTION_CALLS
 }

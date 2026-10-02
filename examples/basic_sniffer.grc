@@ -1336,6 +1336,22 @@ blocks:
     coordinate: [1656, 1016.0]
     rotation: 0
     state: enabled
+- name: wisun_pdu_fcs_check_0
+  id: wisun_pdu_fcs_check
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    drop_invalid_frames: 'False'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1408, 1016.0]
+    rotation: 0
+    state: enabled
 - name: wisun_power_squelch_relative_cc_0
   id: wisun_power_squelch_relative_cc
   parameters:
@@ -1408,12 +1424,13 @@ connections:
 - [osmosdr_source_0, '0', qtgui_sink_x_0, '0']
 - [pdu_pdu_to_tagged_stream_0_0, '0', blocks_file_sink_0_0, '0']
 - [pdu_tagged_stream_to_pdu_0_0, pdus, blocks_message_debug_1, print]
-- [pdu_tagged_stream_to_pdu_0_0, pdus, wisun_pdu_add_pcapng_header_0, pdus]
+- [pdu_tagged_stream_to_pdu_0_0, pdus, wisun_pdu_fcs_check_0, pdus]
 - [wisun_correlate_sync_word_bb_0, '0', blocks_char_to_float_0, '0']
 - [wisun_correlate_sync_word_bb_0, '0', wisun_packet_data_gate_bb_0, '0']
 - [wisun_data_whitening_bb_0, '0', blocks_unpacked_to_packed_xx_0, '0']
 - [wisun_packet_data_gate_bb_0, '0', wisun_data_whitening_bb_0, '0']
 - [wisun_pdu_add_pcapng_header_0, pdus, blocks_message_debug_1_0, print]
+- [wisun_pdu_fcs_check_0, pdus, wisun_pdu_add_pcapng_header_0, pdus]
 - [wisun_pdu_add_pcapng_header_0, pdus, pdu_pdu_to_tagged_stream_0_0, pdus]
 - [wisun_power_squelch_relative_cc_0, '0', wisun_rssi_tag_cc_0, '0']
 - [wisun_rssi_tag_cc_0, '0', analog_quadrature_demod_cf_0, '0']

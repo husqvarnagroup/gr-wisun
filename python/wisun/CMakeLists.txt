@@ -55,3 +55,5 @@ GR_ADD_TEST(qa_pdu_add_pcapng_header ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE
 GR_ADD_TEST(qa_gated_power_squelch_relative_cc ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_gated_power_squelch_relative_cc.py)
 GR_ADD_TEST(qa_pdu_fec_decode ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_pdu_fec_decode.py)
 GR_ADD_TEST(qa_fec_receive ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_fec_receive.py)
+GR_ADD_TEST(qa_pdu_fcs_check ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_pdu_fcs_check.py)
+GR_ADD_TEST(qa_uncoded_receive ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_uncoded_receive.py)

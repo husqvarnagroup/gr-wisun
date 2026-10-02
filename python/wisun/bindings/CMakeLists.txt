@@ -32,6 +32,7 @@ list(APPEND wisun_python_files
     packet_data_gate_bb_python.cc
     pdu_add_pcap_header_python.cc
     pdu_add_pcapng_header_python.cc
+    pdu_fcs_check_python.cc
     pdu_fec_decode_python.cc
     power_squelch_relative_cc_python.cc
     rssi_tag_cc_python.cc
