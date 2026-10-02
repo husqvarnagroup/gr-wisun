@@ -56,11 +56,15 @@ class baseband_channel_receiver(gr.hier_block2):
         self.dc_correction_block = wisun.tag_based_dc_correction_ff('squelch_sob', 'squelch_eob',
                                                                     self._samples_per_symbol * DC_CORRECTION_SYMBOLS)
         self.agc_block = analog.agc_ff(1e-4, 1.0, 1.0, 1.5)
+        # loop bandwidth and damping, measured against gr-wisun-test-suite's SNR,
+        # carrier-offset and clock-error sweeps rather than taken from a textbook: 0.18/1.0
+        # beat the previous 0.045/1 in aggregate on all three, on a plateau spanning
+        # loop_bw 0.15 to 0.25, and recovers a clock-error point that collapsed entirely
         self.symbol_sync_block = digital.symbol_sync_ff(
             digital.TED_ZERO_CROSSING,
             self._samples_per_symbol,
-            0.045,
-            1,
+            0.18,
+            1.0,
             1.0,
             0.05,  # maximum deviation
             1,
