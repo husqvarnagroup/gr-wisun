@@ -132,10 +132,13 @@ int correlate_sync_word_bb_impl::work(int noutput_items,
             /*
              * Number of octets to collect from the first bit of the SFD onwards. For a
              * coded frame the frame length counts the frame before it was encoded, so
-             * framing has to be driven by the on-air length instead.
+             * framing has to be driven by the on-air length instead. For an uncoded
+             * frame, the frame length field is the PSDU length alone (frame check
+             * sequence included), so the SFD and PHY header octets have to be added
+             * back in to span the whole frame from the tag's position.
              */
-            uint32_t packet_octets =
-                d_fec ? 2 + fec::coded_length(phr_frame_length) : phr_frame_length;
+            uint32_t packet_octets = d_fec ? 2 + fec::coded_length(phr_frame_length)
+                                           : (sfd_bits + phr_bits) / 8 + phr_frame_length;
 
             if (d_fec) {
                 d_logger->notice("packet detected (channel {:d}): {:d} bytes, "

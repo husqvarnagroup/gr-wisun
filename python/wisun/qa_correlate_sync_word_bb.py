@@ -57,8 +57,8 @@ class qa_correlate_sync_word_bb(gr_unittest.TestCase):
             0, 1, 0, 1, 0, 1, 0, 1,  # preamble
             1, 0, 0, 1, 0, 0, 0, 0,  # SFD
             0, 1, 0, 0, 1, 1, 1, 0,  # SFD
-            0, 0, 0, 0, 0, 0, 0, 0,  # PHR
-            0, 0, 0, 1, 0, 0, 0, 0,  # PHR
+            0, 0, 0, 0, 0, 0, 0, 0,  # PHR: frame length 12 (PSDU octets alone,
+            0, 0, 0, 0, 1, 1, 0, 0,  # PHR  the SFD+PHR octets below add up to 16)
             1, 1, 0, 0, 0, 0, 0, 0,  # payload data ..
             1, 1, 0, 0, 0, 0, 0, 1,  # payload data ..
             1, 1, 0, 0, 0, 0, 1, 0,  # payload data ..
@@ -110,6 +110,8 @@ class qa_correlate_sync_word_bb(gr_unittest.TestCase):
         # check packet tag
         tag = next(tag for tag in tags if str(tag.key) == "wisun-packet")
         self.assertEqual(str(tag.key), "wisun-packet")
+        # PHR frame length (12) is the PSDU alone; the SFD and PHR octets (4) are
+        # added back in, since framing spans the whole frame from the tag's offset
         self.assertEqual(int(str(tag.value)), 16)
         self.assertEqual(tag.offset, 64)  # 32 zeroes (from history) + 32 preamble bits
 
@@ -180,7 +182,33 @@ class qa_correlate_sync_word_bb(gr_unittest.TestCase):
         delay = 16 + 32
         self.assertEqual(tags["wisun-packet"].offset, delay + 8 * preamble_octets)
 
-    def test_004_correlate_sync_word_bb_fec_is_deaf_to_uncoded_sfd(self):
+    def test_004_uncoded_packet_length_spans_the_whole_frame(self):
+        """The length tag must cover the SFD and PHY header, not only the PSDU.
+
+        The frame length field counts PSDU octets alone, so framing the span from the SFD
+        by that number cuts the frame short by exactly the 4 SFD and PHY header octets.
+        With a 4-octet frame check sequence that happens to cost only the FCS; with a
+        2-octet one it eats into the payload.
+        """
+        for fcs16 in (False, True):
+            psdu = fec.append_fcs(bytes(range(20)), fcs16=fcs16)
+            phr = fec.phr_value(len(psdu), whitened=False, fcs16=fcs16)
+            bits = (fec.octets_to_bits([fec.PREAMBLE_OCTET] * 8)
+                    + fec.bits_msb_first(SFD, 16)
+                    + fec.bits_msb_first(phr, 16)
+                    + fec.octets_to_bits(psdu))
+
+            src = blocks.vector_source_b(bits + [0] * 64)
+            blk = correlate_sync_word_bb(SFD)
+            dst = blocks.vector_sink_b()
+            self.tb.connect(src, blk, dst)
+            self.tb.run()
+
+            tag = next(t for t in dst.tags() if str(t.key) == "wisun-packet")
+            self.assertEqual(int(str(tag.value)), 4 + len(psdu))
+            self.setUp()
+
+    def test_005_correlate_sync_word_bb_fec_is_deaf_to_uncoded_sfd(self):
         """A receiver locked to one SFD must be deaf to the other."""
         psdu = fec.append_fcs(bytes(range(46)))
         src_data = fec.on_air_bits(psdu)
