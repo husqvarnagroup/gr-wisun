@@ -9,7 +9,7 @@ category: '[Wi-SUN]'
 templates:
   imports: from gnuradio import wisun
   # yamllint disable rule:line-length
-  make: wisun.single_channel_receiver(${sample_rate}, ${frequency_offset}, ${channel_spacing}, ${decimation}, ${samples_per_symbol}, ${gated_power_squelch})
+  make: wisun.single_channel_receiver(${sample_rate}, ${frequency_offset}, ${channel_spacing}, ${decimation}, ${samples_per_symbol}, fec=${fec}, gated_power_squelch=${gated_power_squelch})
   # yamllint enable rule:line-length
 
 parameters:
@@ -28,6 +28,10 @@ parameters:
 - id: samples_per_symbol
   label: Samples per Symbol
   dtype: int
+- id: fec
+  label: FEC-coded (PHY type 1)
+  dtype: bool
+  default: 'False'
 - id: gated_power_squelch
   label: Gated Power Squelch
   dtype: bool

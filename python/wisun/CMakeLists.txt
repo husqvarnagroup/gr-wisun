@@ -57,3 +57,4 @@ GR_ADD_TEST(qa_pdu_fec_decode ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/q
 GR_ADD_TEST(qa_fec_receive ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_fec_receive.py)
 GR_ADD_TEST(qa_pdu_fcs_check ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_pdu_fcs_check.py)
 GR_ADD_TEST(qa_uncoded_receive ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_uncoded_receive.py)
+GR_ADD_TEST(qa_grc_wrappers ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_grc_wrappers.py)
