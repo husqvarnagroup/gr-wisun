@@ -12,7 +12,15 @@
 namespace gr {
 namespace wisun {
 
-static const uint16_t correlation_preamble_bits = 24;
+/*
+ * Number of alternating bits required ahead of the start-of-frame delimiter. This is a
+ * detection threshold, not a property of the signal: the preamble may legitimately be as
+ * short as 8 symbols (19.2.2), and demanding more than it carries makes such a frame
+ * invisible however strong it is. Measured against gr-wisun-test-suite: at 24 the
+ * 169-octet frame of the PhyModeID 0x13 recordings is never received, not even
+ * unimpaired; at 16 it decodes with a path metric of zero.
+ */
+static const uint16_t correlation_preamble_bits = 16;
 static const uint16_t sfd_bits = 16;
 static const uint16_t phr_bits = 16;
 
