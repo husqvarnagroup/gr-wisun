@@ -551,6 +551,7 @@ blocks:
     channel_spacing: channel_spacing
     comment: ''
     decimation: decimation
+    fec: 'False'
     frequency_offset: rx_offset
     gated_power_squelch: 'False'
     maxoutbuf: '0'
