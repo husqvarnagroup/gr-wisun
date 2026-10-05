@@ -12,7 +12,21 @@ from gnuradio import analog, blocks, digital, gr, pdu, wisun
 from gnuradio.wisun.parameters import SUN_FSK_SFD_CODED, SUN_FSK_SFD_UNCODED
 
 RSSI_TAG_SYMBOLS = 20  # number of symbols to evaluate per RSSI-tag; should be < preamble length
-DC_CORRECTION_SYMBOLS = 30  # number of symbols for DC correction estimation; should be < preamble length
+
+# Number of symbols the DC correction estimates over. The estimate can only be applied
+# once it is complete, so these symbols reach the slicer uncorrected: with an offset
+# beyond the frequency deviation they slice to a constant and are lost to the sync word
+# correlator, which needs 16 alternating symbols before the 16 of the sync word. The
+# preamble is 64 symbols, so the window directly bounds the margin acquisition has.
+#
+# Measured against gr-wisun-test-suite over all five recordings: 20 symbols leaves 45 of
+# the 64 usable where 30 leaves 35, and is equal or better on all three impairment axes
+# (0.73 to 0.75 aggregated at 13 to 10 dB, 0.80 to 0.82 over the carrier offset sweep,
+# 0.82 to 0.84 over the clock error sweep). It also ends a knife edge: at 30 symbols the
+# first packet of a burst at 5 samples per symbol was decided by rounding noise, so the
+# clean-sample tests failed about one run in six. Shorter windows are worse again - at 10
+# symbols the estimate catches the squelch's rising edge and the same tests collapse.
+DC_CORRECTION_SYMBOLS = 20
 
 # Number of leading bits of a packet that data whitening does not cover: the SFD, plus the
 # PHY header. For a coded packet the PHY header is the first interleaver block, twice as
