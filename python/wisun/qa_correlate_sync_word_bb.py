@@ -208,7 +208,27 @@ class qa_correlate_sync_word_bb(gr_unittest.TestCase):
             self.assertEqual(int(str(tag.value)), 4 + len(psdu))
             self.setUp()
 
-    def test_005_correlate_sync_word_bb_fec_is_deaf_to_uncoded_sfd(self):
+    def test_005_a_short_preamble_is_still_detected(self):
+        """A frame whose preamble is shorter than the detector's taste must still be found.
+
+        The preamble may legitimately be as short as 8 symbols, and a receiver asking for
+        more than it carries never sees such a frame however strong it is. One recording's
+        169-octet frame is exactly this case.
+        """
+        psdu = fec.append_fcs(bytes(range(46)))
+        bits = fec.on_air_bits(psdu, preamble_octets=2)  # 16 preamble bits
+
+        src = blocks.vector_source_b(bits + [0] * 64)
+        blk = correlate_sync_word_bb(SFD_CODED, True)
+        dst = blocks.vector_sink_b()
+        self.tb.connect(src, blk, dst)
+        self.tb.run()
+
+        tag = next((t for t in dst.tags() if str(t.key) == "wisun-packet"), None)
+        self.assertIsNotNone(tag, "frame with a 16-bit preamble was not detected")
+        self.assertEqual(int(str(tag.value)), 2 + fec.coded_length(len(psdu)))
+
+    def test_006_correlate_sync_word_bb_fec_is_deaf_to_uncoded_sfd(self):
         """A receiver locked to one SFD must be deaf to the other."""
         psdu = fec.append_fcs(bytes(range(46)))
         src_data = fec.on_air_bits(psdu)
