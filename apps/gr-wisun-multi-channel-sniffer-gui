@@ -13,6 +13,7 @@ import sip
 from gnuradio import qtgui
 from gnuradio.fft import window
 from gnuradio.wisun.cli import (
+    add_channel_mask_argument,
     add_list_arguments,
     add_mode_arguments,
     add_receiver_arguments,
@@ -124,6 +125,7 @@ def main():
                             formatter_class=ArgumentDefaultsHelpFormatter)
     add_receiver_arguments(parser)
     add_mode_arguments(parser)
+    add_channel_mask_argument(parser)
     parser.add_argument('-c', '--channels', type=str, default="",
                         help="Wi-SUN channels to receive; empty: all channels")
     add_list_arguments(parser)
@@ -137,7 +139,8 @@ def main():
     config = build_configuration(regulatory_domain=args.regulatory_domain,
                                  channel_plan_id=args.channel_plan,
                                  phy_mode_id=(args.phy_type << 4) + args.phy_mode,
-                                 allowed_channels=parse_channels(args.channels))
+                                 allowed_channels=parse_channels(args.channels),
+                                 mask_channels_only=args.mask_channels_only)
 
     qapp = Qt.QApplication(sys.argv)
     sniffer = GuiMultiChannelSniffer(args.device, args.gain, args.dest_file, config, args.update_rate)

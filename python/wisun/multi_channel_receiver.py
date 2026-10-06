@@ -21,7 +21,7 @@ class multi_channel_receiver(gr.hier_block2):
     """Block to receive Wi-SUN packets from multiple channels using polyphase channelizer."""
 
     def __init__(self, sample_rate, center_frequency, channel_0_frequency, channel_spacing, symbol_rate, channels,
-                 fec=False, metadata=None):
+                 fec=False, metadata=None, channels_outside_mask=None):
         """Initialize block."""
         gr.hier_block2.__init__(self,
                                 "multi_channel_receiver",
@@ -29,6 +29,9 @@ class multi_channel_receiver(gr.hier_block2):
                                 gr.io_signature(0, 0, 0))  # Output signature
 
         channels = set(channels)
+        # channels received although the regulatory channel mask excludes them; packets on
+        # them are real but unexpected, so the channel receiver reports them as warnings
+        channels_outside_mask = set() if channels_outside_mask is None else set(channels_outside_mask)
         if metadata is None:
             metadata = {}
 
@@ -90,14 +93,19 @@ class multi_channel_receiver(gr.hier_block2):
             else:
                 print(f"PFB channel {pfb_channel:2}/{n_channels} ({channel_frequency/1e6:.1f} MHz): " +
                       f"Wi-SUN channel {wisun_channel:2}; " +
-                      ("active -> setting up channel receiver" if in_use else "not active -> connecting to null sink"))
+                      ("active -> setting up channel receiver"
+                       + (" (outside the regulatory channel mask)"
+                          if wisun_channel in channels_outside_mask else "")
+                       if in_use else "not active -> connecting to null sink"))
             if in_use:
                 covered_channels.add(wisun_channel)
                 metadata["packet-channel-number"] = wisun_channel
-                baseband_channel_receiver = wisun.baseband_channel_receiver(samples_per_symbol,
-                                                                            fec=fec,
-                                                                            gated_power_squelch=True,
-                                                                            metadata=metadata)
+                baseband_channel_receiver = wisun.baseband_channel_receiver(
+                    samples_per_symbol,
+                    fec=fec,
+                    gated_power_squelch=True,
+                    metadata=metadata,
+                    outside_channel_mask=wisun_channel in channels_outside_mask)
                 add_pcap_hdr = wisun.pdu_add_pcapng_header(True, True, True)
                 self.connect((pfb_channelizer, pfb_channel), (baseband_channel_receiver, 0))
                 self.msg_connect((baseband_channel_receiver, 'pdus'), (add_pcap_hdr, 'pdus'))

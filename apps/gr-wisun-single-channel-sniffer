@@ -12,6 +12,7 @@ from collections import OrderedDict
 import osmosdr
 from gnuradio import blocks, gr, pdu, wisun
 from gnuradio.wisun.cli import (
+    add_channel_mask_argument,
     add_list_arguments,
     add_mode_arguments,
     add_receiver_arguments,
@@ -115,6 +116,7 @@ def main():
                             formatter_class=ArgumentDefaultsHelpFormatter)
     add_receiver_arguments(parser)
     add_mode_arguments(parser)
+    add_channel_mask_argument(parser)
     parser.add_argument('-c', '--channel', type=int, default=0, help="Wi-SUN channel to receive")
     add_list_arguments(parser)
     args = parser.parse_args()
@@ -125,7 +127,8 @@ def main():
     config = build_configuration(regulatory_domain=args.regulatory_domain,
                                  channel_plan_id=args.channel_plan,
                                  phy_mode_id=(args.phy_type << 4) + args.phy_mode,
-                                 allowed_channels=[args.channel])
+                                 allowed_channels=[args.channel],
+                                 mask_channels_only=args.mask_channels_only)
 
     run_until_interrupted(GrWisunSingleChannelSniffer(args.device, args.gain, args.dest_file, config))
 

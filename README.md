@@ -206,6 +206,13 @@ symbol rate, modulation index and channel spacing stay as they are:
 gr-wisun-multi-channel-sniffer -r EU -p 33 -t 1 -m 3
 ```
 
+Every channel the channel plan defines is received, including those the
+regulatory channel mask excludes — devices have been observed
+transmitting there, and a sniffer that does not listen cannot report it.
+Each packet received on such a channel is logged as a warning. Pass
+`--mask-channels-only` to receive only the channels the mask allows (for
+EU channel plan 33 that is 29 of 35).
+
 In a separate terminal:
 
 ```bash

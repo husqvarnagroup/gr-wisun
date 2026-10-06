@@ -85,6 +85,9 @@ class MultiChannelSniffer(gr.top_block):
             metadata['packet-phy-type'] = phy_type
             metadata['packet-phy-mode'] = phy_mode
 
+        # channels received although the regulatory channel mask excludes them
+        outside_mask = wisun_config.channels_outside_mask()
+
         ##################################################
         # Blocks
         ##################################################
@@ -107,7 +110,8 @@ class MultiChannelSniffer(gr.top_block):
                                                               radio_config.symbol_rate,
                                                               radio_config.channels,
                                                               fec=wisun_config.uses_fec(),
-                                                              metadata=metadata)
+                                                              metadata=metadata,
+                                                              channels_outside_mask=outside_mask)
 
         pdu_to_tagged_stream = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         file_sink = blocks.file_sink(gr.sizeof_char*1, dest_file, False)

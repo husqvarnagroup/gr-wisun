@@ -66,6 +66,17 @@ def add_mode_arguments(parser):
     parser.add_argument('-m', '--phy-mode', type=int, default=1, help="Wi-SUN PHY mode")
 
 
+def add_channel_mask_argument(parser):
+    """Add the option restricting reception to the regulatory channel mask.
+
+    Every application takes it, including the multi-mode sniffer, which does not use
+    `add_mode_arguments`.
+    """
+    parser.add_argument('--mask-channels-only', action="store_true",
+                        help="Receive only the channels the regulatory channel mask allows "
+                             "(default: every channel of the channel plan)")
+
+
 def add_list_arguments(parser):
     """Add the options that print a table of Wi-SUN parameters and exit."""
     parser.add_argument('--list-regulatory-domains', action="store_true",
@@ -123,7 +134,7 @@ def ensure_fifo(path):
 
 
 def build_configuration(regulatory_domain, channel_plan_id, phy_mode_id, allowed_channels=None,
-                        label=""):
+                        mask_channels_only=False, label=""):
     """Build a Wi-SUN configuration, reporting anything wrong with it and exiting.
 
     Returns the configuration. OFDM modes are rejected here: they parse and describe
@@ -136,13 +147,18 @@ def build_configuration(regulatory_domain, channel_plan_id, phy_mode_id, allowed
         config = WiSunConfiguration(regulatory_domain=regulatory_domain,
                                     channel_plan_id=channel_plan_id,
                                     phy_mode_id=phy_mode_id,
-                                    allowed_channels=allowed_channels)
+                                    allowed_channels=allowed_channels,
+                                    mask_channels_only=mask_channels_only)
     except CONFIGURATION_EXCEPTIONS as e:
         sys.stderr.write(f"ERROR: {e}\n")
         sys.exit(1)
 
     print(f"WiSUN configuration{label}:")
     tabular_pretty_print(config.info())
+    if config.channels_outside_mask():
+        outside = ", ".join(str(channel) for channel in config.channels_outside_mask())
+        sys.stderr.write(f"WARNING: receiving channels the regulatory channel mask excludes: {outside}\n"
+                         "         (pass --mask-channels-only to skip them)\n")
     print(f"Radio configuration{label}:")
     tabular_pretty_print(config.radio_configuration().info())
 
