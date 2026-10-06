@@ -213,6 +213,14 @@ Each packet received on such a channel is logged as a warning. Pass
 `--mask-channels-only` to receive only the channels the mask allows (for
 EU channel plan 33 that is 29 of 35).
 
+A frame received on two channels at once is reported as such. A
+transmitter with a spurious sideband puts a copy of its frame on another
+channel, and the receiver listening there decodes it; a corrupted copy
+fails its frame check sequence, but a bit-exact one passes every check a
+single frame can be given. Everything is still written to the capture —
+only a warning is logged. The input is watched for clipping as well, which
+is what makes such copies visible in the first place.
+
 `--oversampling` sets how much faster than the channel spacing the
 channelizer runs its outputs, which is what fixes the samples per symbol
 the channel receivers work at. Without it that would be channel spacing

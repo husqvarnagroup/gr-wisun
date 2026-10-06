@@ -61,3 +61,4 @@ GR_ADD_TEST(qa_grc_wrappers ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_
 GR_ADD_TEST(qa_baseband_acquisition ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_baseband_acquisition.py)
 GR_ADD_TEST(qa_multi_channel_receiver ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_multi_channel_receiver.py)
 GR_ADD_TEST(qa_clipping_detector_c ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_clipping_detector_c.py)
+GR_ADD_TEST(qa_pdu_duplicate_monitor ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_pdu_duplicate_monitor.py)

@@ -18,6 +18,8 @@ install(FILES api.h
     packet_data_gate_bb.h
     pdu_add_pcap_header.h
     pdu_add_pcapng_header.h
+    pdu_duplicate_monitor.h
+    pdu_fcs_check.h
     pdu_fec_decode.h
     power_squelch_relative_cc.h
     rssi_tag_cc.h
