@@ -30,3 +30,6 @@ static const char* __doc_gr_wisun_correlate_sync_word_bb_make = R"doc()doc";
 
 
 static const char* __doc_gr_wisun_correlate_sync_word_bb_set_channel = R"doc()doc";
+
+
+static const char* __doc_gr_wisun_correlate_sync_word_bb_set_outside_channel_mask = R"doc()doc";

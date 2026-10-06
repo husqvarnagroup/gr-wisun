@@ -57,6 +57,15 @@ public:
      * The channel is used purely for debugging (include current channel in log messages).
      */
     virtual void set_channel(int16_t channel) = 0;
+
+    /*!
+     * \brief Mark the channel as one the regulatory channel mask excludes.
+     *
+     * A sniffer may listen to such a channel deliberately - devices have been observed
+     * transmitting there - so every packet detected on it is reported as a warning rather
+     * than dropped.
+     */
+    virtual void set_outside_channel_mask(bool outside) = 0;
 };
 
 } // namespace wisun

@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(correlate_sync_word_bb.h) */
-/* BINDTOOL_HEADER_FILE_HASH(1cd4fe39a8d05773340dd1a542d8156f)                     */
+/* BINDTOOL_HEADER_FILE_HASH(9b9e5e479ff15adaa3c614f4120d0898)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -50,6 +50,11 @@ void bind_correlate_sync_word_bb(py::module& m)
              &correlate_sync_word_bb::set_channel,
              py::arg("channel"),
              D(correlate_sync_word_bb, set_channel))
+
+        .def("set_outside_channel_mask",
+             &correlate_sync_word_bb::set_outside_channel_mask,
+             py::arg("outside"),
+             D(correlate_sync_word_bb, set_outside_channel_mask))
 
         ;
 }

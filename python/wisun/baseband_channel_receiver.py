@@ -38,8 +38,12 @@ HEADER_BITS_CODED = 16 + 32
 class baseband_channel_receiver(gr.hier_block2):
     """Block to receive Wi-SUN packets on a single baseband channel (i.e. already filtered and centered to 0 Hz)."""
 
-    def __init__(self, samples_per_symbol, sfd=None, fec=False, gated_power_squelch=False, metadata=None):
+    def __init__(self, samples_per_symbol, sfd=None, fec=False, gated_power_squelch=False, metadata=None,
+                 outside_channel_mask=False):
         """Initialize block.
+
+        Set `outside_channel_mask` for a channel the regulatory channel mask excludes, so that
+        packets received on it are reported as a warning.
 
         If `fec` is set, packets are expected to be FEC-coded (Wi-SUN PHY type 1). A coded mode changes
         nothing below the bits, so the receive chain up to and including the bit slicer is the same; what
@@ -104,6 +108,8 @@ class baseband_channel_receiver(gr.hier_block2):
             pmt_value = pmt.from_long(value)
             block = pdu.pdu_set(pmt_key, pmt_value)
             self.metadata_blocks.append(block)
+
+        self.correlate_sync_word_block.set_outside_channel_mask(outside_channel_mask)
 
         # if available, provide channel information to blocks
         # (this is only relevant for logging)

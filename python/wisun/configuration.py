@@ -90,10 +90,18 @@ class ChannelMask:
         hexstr = f"{self._mask:0{self._mask_length * 2}x}"
         return ":".join(reversed([hexstr[i:i + 2] for i in range(0, len(hexstr), 2)]))
 
+    def covered_channels(self):
+        """Return the number of channels the mask covers.
+
+        Channels past the end of the mask are not supported, so this bounds the channel
+        space a (regulatory domain, channel plan) combination can have.
+        """
+        return self._mask_length * 8
+
     def supported_channels(self):
         """Return list of all active channels in mask."""
         supported_channels = []
-        for channel in range(self._mask_length * 8):
+        for channel in range(self.covered_channels()):
             if channel in self:
                 supported_channels.append(channel)
         return supported_channels
@@ -182,8 +190,14 @@ class WiSunConfiguration:
     """Represents Wi-SUN configuration."""
 
     def __init__(self, regulatory_domain: str, channel_plan_id: int, phy_mode_id: int,
-                 allowed_channels: list[int] | None = None):
-        """Initialize class from given parameters."""
+                 allowed_channels: list[int] | None = None, mask_channels_only: bool = False):
+        """Initialize class from given parameters.
+
+        By default every channel the channel plan defines is received, including those the
+        regulatory channel mask excludes: devices have been observed transmitting on them,
+        and a sniffer that does not listen there cannot report that. Set
+        `mask_channels_only` to receive only what the mask allows.
+        """
         if allowed_channels is None:
             allowed_channels = []
         if regulatory_domain not in WISUN_COUNTRY_CODES:
@@ -203,14 +217,18 @@ class WiSunConfiguration:
             raise InvalidWiSunParametersException(f"channel plan ID {channel_plan_id} is not supported for "
                                                   f"regulatory domain {regulatory_domain}")
         num_chans, supported_phy_mode_ids, chan_mask = WISUN_SUPPORTED_PARAMETERS[(regulatory_domain, channel_plan_id)]
-        self.number_of_channels = num_chans
+        self.valid_number_of_channels = num_chans
         if self.phy_mode_id not in supported_phy_mode_ids:
             raise UnsupportedWiSunPhyModeIdException(f"PHY mode ID 0x{self.phy_mode_id:02x} is not supported for "
                                                      f"regulatory domain {regulatory_domain} and "
                                                      f"channel plan {channel_plan_id}")
         self.channel_mask = ChannelMask.from_string(chan_mask)
+        self.mask_channels_only = mask_channels_only
         for channel in allowed_channels:
-            if channel not in self.channel_mask:
+            if channel not in self.plan_channels():
+                raise UnsupportedWiSunChannelException(f"channel {channel} is not part of channel plan "
+                                                       f"{channel_plan_id}")
+            if mask_channels_only and channel not in self.channel_mask:
                 raise UnsupportedWiSunChannelException(f"channel {channel} is not supported in channel mask for "
                                                        f"({regulatory_domain}, {channel_plan_id})")
         self.allowed_channels = allowed_channels
@@ -223,8 +241,9 @@ class WiSunConfiguration:
             allowed = "all"
         s = f"regulatory domain: {self.regulatory_domain}, channel plan ID: {self.channel_plan_id}, " \
             f"frequency band: {self.frequency_band()[0]:.1f} MHz – {self.frequency_band()[1]:.1f} MHz, " \
-            f"PHY mode ID: 0x{self.phy_mode_id:02x}, number of channels: {self.number_of_channels}, " \
-            f"allowed channels: {allowed}"
+            f"PHY mode ID: 0x{self.phy_mode_id:02x}, channels in plan: {len(self.plan_channels())}, " \
+            f"allowed by channel mask: {self.valid_number_of_channels}, " \
+            f"receiving: {len(self.channels())}, allowed channels: {allowed}"
         return s
 
     def info(self) -> OrderedDict:
@@ -238,7 +257,11 @@ class WiSunConfiguration:
             ("Channel plan", str(self.channel_plan_id)),
             ("Frequency band", f"{self.frequency_band()[0]:.1f} MHz — {self.frequency_band()[1]:.1f} MHz"),
             ("PHY mode ID", f"0x{self.phy_mode_id:02x}"),
-            ("Number of channels", str(self.number_of_channels)),
+            ("Channels in plan", str(len(self.plan_channels()))),
+            ("Allowed by channel mask", str(self.valid_number_of_channels)),
+            ("Receiving", f"{len(self.channels())} channels"
+                          + (f", {len(self.channels_outside_mask())} of them outside the channel mask"
+                             if self.channels_outside_mask() else "")),
             ("Allowed channels", allowed),
         ])
 
@@ -301,12 +324,40 @@ class WiSunConfiguration:
         """Return channel 0 center frequency for current Wi-SUN configuration."""
         return int(WISUN_CHANNEL_PLANS[self.channel_plan_id][2])
 
+    def plan_channels(self) -> list[int]:
+        """Return every channel the channel plan defines, mask or no mask.
+
+        [Wi-SUN] Table 8 tabulates ValidTotalNumChan - the channels left once the regulatory
+        mask has been applied - rather than TotalNumChan, so the space is derived instead:
+        the channels the mask covers, up to the top of the frequency band.
+        test_configuration.py pins that derivation to the specification by checking that the
+        mask then leaves exactly ValidTotalNumChan of them, for every supported (regulatory
+        domain, channel plan) combination.
+
+        Note that the mask bounds this, so where a mask is shorter than the band (EU channel
+        plan 34, say) the result is smaller than IEEE 802.15.4's TotalNumChan. Those
+        channels count as unsupported in that regulatory domain either way.
+        """
+        upper_limit = self.frequency_band()[1] * 1e6
+        return [channel for channel in range(self.channel_mask.covered_channels())
+                if self.channel_0_center_frequency() + channel * self.channel_spacing() <= upper_limit]
+
+    def mask_channels(self) -> list[int]:
+        """Return the channels the regulatory channel mask allows."""
+        return [channel for channel in self.plan_channels() if channel in self.channel_mask]
+
     def channels(self) -> list[int]:
         """Return list of all active channels."""
         if len(self.allowed_channels) > 0:
             return self.allowed_channels
+        elif self.mask_channels_only:
+            return self.mask_channels()
         else:
-            return self.channel_mask.supported_channels()
+            return self.plan_channels()
+
+    def channels_outside_mask(self) -> list[int]:
+        """Return the active channels the regulatory channel mask excludes."""
+        return [channel for channel in self.channels() if channel not in self.channel_mask]
 
     def radio_configuration(self) -> RadioConfiguration:
         """Return RadioConfiguration instance for current Wi-SUN configuration."""

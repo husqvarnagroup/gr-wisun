@@ -24,6 +24,7 @@ private:
     uint16_t d_sfd_data;
     uint32_t d_phr_data;
     int16_t d_channel;
+    bool d_outside_channel_mask;
 
     /*!
      * \brief Decode the PHY header of a coded frame from its code bits.
@@ -43,6 +44,11 @@ public:
     ~correlate_sync_word_bb_impl();
 
     void set_channel(int16_t channel) override { d_channel = channel; }
+
+    void set_outside_channel_mask(bool outside) override
+    {
+        d_outside_channel_mask = outside;
+    }
 
     // Where all the action really happens
     int work(int noutput_items,

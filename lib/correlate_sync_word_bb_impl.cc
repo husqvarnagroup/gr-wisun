@@ -52,7 +52,8 @@ correlate_sync_word_bb_impl::correlate_sync_word_bb_impl(uint16_t sfd, bool fec)
       d_preamble_last_bit(2),
       d_sfd_data(0),
       d_phr_data(0),
-      d_channel(-1)
+      d_channel(-1),
+      d_outside_channel_mask(false)
 {
     set_history(sfd_bits + (d_fec ? coded_phr_bits : phr_bits) + 1);
     declare_sample_delay(history() - 1);
@@ -163,6 +164,12 @@ int correlate_sync_word_bb_impl::work(int noutput_items,
                                  d_channel,
                                  phr_frame_length,
                                  d_preamble_bit_counter);
+            }
+
+            if (d_outside_channel_mask) {
+                d_logger->warn("packet on channel {:d}, which the regulatory channel "
+                               "mask excludes",
+                               d_channel);
             }
 
             if (phr_frame_length == 0) {

@@ -13,6 +13,7 @@ from collections import OrderedDict
 import osmosdr
 from gnuradio import blocks, gr, pdu, wisun
 from gnuradio.wisun.cli import (
+    add_channel_mask_argument,
     add_list_arguments,
     add_receiver_arguments,
     build_configuration,
@@ -74,7 +75,9 @@ class GrWisunMultiModeMultiChannelSniffer(gr.top_block):
                                                                   radio_config.symbol_rate,
                                                                   radio_config.channels,
                                                                   fec=wisun_config.uses_fec(),
-                                                                  metadata=metadata)
+                                                                  metadata=metadata,
+                                                                  channels_outside_mask=
+                                                                  wisun_config.channels_outside_mask())
             receivers.append(multi_channel_receiver)
 
         ##################################################
@@ -86,7 +89,7 @@ class GrWisunMultiModeMultiChannelSniffer(gr.top_block):
         self.connect((pdu_to_tagged_stream, 0), (file_sink, 0))
 
 
-def parse_mode(mode, index, regulatory_domain):
+def parse_mode(mode, index, regulatory_domain, mask_channels_only):
     """Parse one `channel plan, PHY type, PHY mode` triple into a configuration."""
     if not re.match(r"^\d+,\d+,\d+$", mode):
         sys.stderr.write(f"Error: invalid mode '{mode}'\n")
@@ -96,6 +99,7 @@ def parse_mode(mode, index, regulatory_domain):
     return build_configuration(regulatory_domain=regulatory_domain,
                                channel_plan_id=channel_plan_id,
                                phy_mode_id=(phy_type << 4) + phy_mode,
+                               mask_channels_only=mask_channels_only,
                                label=f" [{index}]")
 
 
@@ -114,6 +118,7 @@ def main():
     parser = ArgumentParser(description="Multi mode, multi channel Wi-SUN sniffer.",
                             formatter_class=ArgumentDefaultsHelpFormatter)
     add_receiver_arguments(parser)
+    add_channel_mask_argument(parser)
     parser.add_argument('-s', '--sample-rate', type=float, default=8e6, help="SDR hardware sample rate [Hz]")
     parser.add_argument('-f', '--frequency', type=float, default=866.1e6, help="SDR hardware center frequency [Hz]")
     parser.add_argument('-r', '--regulatory-domain', type=str, default="EU", help="Wi-SUN regulatory domain")
@@ -139,7 +144,8 @@ def main():
         ("Gain", f"{args.gain}"),
     ]))
 
-    configs = [parse_mode(mode, i, args.regulatory_domain) for i, mode in enumerate(args.mode)]
+    configs = [parse_mode(mode, i, args.regulatory_domain, args.mask_channels_only)
+               for i, mode in enumerate(args.mode)]
 
     sniffer = GrWisunMultiModeMultiChannelSniffer(args.device,
                                                  args.gain,
