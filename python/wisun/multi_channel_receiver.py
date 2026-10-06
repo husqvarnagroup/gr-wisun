@@ -105,6 +105,9 @@ class multi_channel_receiver(gr.hier_block2):
         # the clipping produced can still be decoded on channels nothing was sent on
         self.clipping_detector = wisun.clipping_detector_c()
         self.connect((self, 0), (self.clipping_detector, 0))
+        # one frame can be received on two channels at once, when a transmitter puts a copy
+        # of it on another channel; this only warns, and nothing is routed through it
+        self.duplicate_monitor = wisun.pdu_duplicate_monitor()
         self.connect((self, 0), (pfb_channelizer, 0))
         self.message_port_register_hier_out('pdus')
 
@@ -137,6 +140,8 @@ class multi_channel_receiver(gr.hier_block2):
                 add_pcap_hdr = wisun.pdu_add_pcapng_header(True, True, True)
                 self.connect((pfb_channelizer, pfb_channel), (baseband_channel_receiver, 0))
                 self.msg_connect((baseband_channel_receiver, 'pdus'), (add_pcap_hdr, 'pdus'))
+                self.msg_connect((baseband_channel_receiver, 'pdus'),
+                                 (self.duplicate_monitor, 'pdus'))
                 self.msg_connect((add_pcap_hdr, 'pdus'), (self, 'pdus'))
             else:
                 null_sink = blocks.null_sink(gr.sizeof_gr_complex)
