@@ -127,7 +127,7 @@ class qa_pdu_add_pcap_header(gr_unittest.TestCase):
 
         # check header: link type
         link_type = struct.unpack("<L", data_str[20:24])[0]
-        self.assertEqual(link_type, 230)
+        self.assertEqual(link_type, 195)  # IEEE 802.15.4 with FCS
 
 
 if __name__ == '__main__':

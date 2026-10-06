@@ -99,7 +99,7 @@ class qa_uncoded_receive(gr_unittest.TestCase):
 
         packets = tb.packets()
         self.assertEqual(len(packets), 1)
-        self.assertEqual(packets[0][4:], payload)
+        self.assertEqual(packets[0][4:], psdu)
         self.assertTrue(tb.metadata(0, 'wisun-fcs-valid'))
 
     def test_002_two_octet_fcs(self):
@@ -115,7 +115,7 @@ class qa_uncoded_receive(gr_unittest.TestCase):
 
         packets = tb.packets()
         self.assertEqual(len(packets), 1)
-        self.assertEqual(packets[0][4:], payload)
+        self.assertEqual(packets[0][4:], psdu)
         self.assertTrue(tb.metadata(0, 'wisun-fcs-valid'))
 
     def test_003_several_frames_of_different_lengths(self):
@@ -130,7 +130,7 @@ class qa_uncoded_receive(gr_unittest.TestCase):
         packets = tb.packets()
         self.assertEqual(len(packets), len(payloads))
         for i, payload in enumerate(payloads):
-            self.assertEqual(packets[i][4:], payload)
+            self.assertEqual(packets[i][4:], fec.append_fcs(payload))
             self.assertTrue(tb.metadata(i, 'wisun-fcs-valid'))
 
     def test_004_the_phy_header_agrees_with_the_correlator(self):

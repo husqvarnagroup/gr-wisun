@@ -112,7 +112,7 @@ class qa_baseband_acquisition(gr_unittest.TestCase):
 
         packets = tb.packets()
         self.assertEqual(len(packets), 1)
-        self.assertEqual(packets[0][4:], payload)
+        self.assertEqual(packets[0][4:], fec.append_fcs(payload))
         self.assertTrue(tb.metadata(0, 'wisun-fcs-valid'))
 
     def test_002_the_estimation_window_leaves_most_of_the_preamble(self):
@@ -138,7 +138,7 @@ class qa_baseband_acquisition(gr_unittest.TestCase):
 
         packets = tb.packets()
         self.assertEqual(len(packets), 1)
-        self.assertEqual(packets[0][4:], payload)
+        self.assertEqual(packets[0][4:], fec.append_fcs(payload))
 
 
 if __name__ == '__main__':

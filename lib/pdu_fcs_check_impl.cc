@@ -105,14 +105,15 @@ void pdu_fcs_check_impl::handle_msg(pmt::pmt_t msg)
     }
 
     /*
-     * Emit the same layout the coded path's pdu_fec_decode produces: start-of-
-     * frame delimiter, PHY header, then the PSDU without its frame check
-     * sequence.
+     * Emit the same layout the coded path's pdu_fec_decode produces: start-of-frame
+     * delimiter, PHY header, then the whole PSDU, frame check sequence included.
+     *
+     * The frame check sequence is kept rather than stripped so that a capture holds the
+     * frame as it was transmitted and a reader can check it for itself;
+     * `wisun-fcs-valid` carries this block's own verdict alongside it.
      */
-    const size_t fcs_len = fec::fcs_octets(fcs16);
-    const size_t payload_length = psdu_len > fcs_len ? psdu_len - fcs_len : 0;
     /* not const: pmt wants a modifiable reference for the length */
-    size_t output_length = header_octets + payload_length;
+    size_t output_length = header_octets + psdu_len;
     pmt::pmt_t out_vect = pmt::make_u8vector(output_length, 0);
     uint8_t* out = pmt::u8vector_writable_elements(out_vect, output_length);
 
@@ -122,7 +123,7 @@ void pdu_fcs_check_impl::handle_msg(pmt::pmt_t msg)
      * same convention pdu_fec_decode's output uses */
     out[2] = (uint8_t)(phr >> 8);
     out[3] = (uint8_t)(phr & 0xff);
-    memcpy(&out[header_octets], psdu, payload_length);
+    memcpy(&out[header_octets], psdu, psdu_len);
 
     pmt::pmt_t meta = pmt::dict_add(msg_meta, pmt_key_fcs_valid, pmt::from_bool(valid));
 
