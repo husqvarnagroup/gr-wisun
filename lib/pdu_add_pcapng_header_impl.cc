@@ -155,7 +155,7 @@ void pdu_add_pcapng_header_impl::handle_msg(pmt::pmt_t msg)
         pmt::pmt_t idb_msg = pmt::cons(pmt::get_PMT_NIL(), idb_vect);
         message_port_pub(msgport_names::pdus(), idb_msg);
 
-        d_section_header_block_done = true;
+        d_interface_description_block_done = true;
     }
 
     msg_meta = pmt::car(msg);

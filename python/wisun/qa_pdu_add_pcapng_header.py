@@ -356,5 +356,38 @@ class qa_pdu_add_pcapng_header(gr_unittest.TestCase):
         self.assertEqual(data[40:-4], payload)
 
 
+    def test_004_the_leading_blocks_are_written_once(self):
+        """The section header and interface description go out once, not once per packet.
+
+        A pcapng stream carries them at the start; repeating the interface description
+        before every packet redefines the interface over and over, which is what the block
+        used to do.
+        """
+        blk = pdu_add_pcapng_header(True, True, True)
+        msg_debug = blocks.message_debug()
+        self.tb.msg_connect((blk, 'pdus'), (msg_debug, 'store'))
+
+        port = pmt.intern("pdus")
+        payload = list(range(4)) + list(range(16))  # bogus SFD & PHR, then payload
+        for _ in range(3):
+            blk.to_basic_block()._post(port, pmt.cons(pmt.PMT_NIL,
+                                                      pmt.init_u8vector(len(payload), payload)))
+        blk.to_basic_block()._post(pmt.intern("system"),
+                                   pmt.cons(pmt.intern("done"), pmt.from_long(1)))
+        self.tb.start()
+        self.tb.wait()
+
+        block_types = []
+        for i in range(msg_debug.num_messages()):
+            data = bytes(pmt.u8vector_elements(pmt.cdr(msg_debug.get_message(i))))
+            block_types.append(struct.unpack("<L", data[0:4])[0])
+
+        self.assertEqual(block_types.count(0x0a0d0d0a), 1)  # section header block
+        self.assertEqual(block_types.count(0x00000001), 1)  # interface description block
+        self.assertEqual(block_types.count(0x00000006), 3)  # enhanced packet blocks
+        # and they come first, in that order
+        self.assertEqual(block_types[:2], [0x0a0d0d0a, 0x00000001])
+
+
 if __name__ == '__main__':
     gr_unittest.run(qa_pdu_add_pcapng_header)
