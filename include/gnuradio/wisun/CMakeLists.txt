@@ -11,6 +11,7 @@
 ########################################################################
 # keep this list sorted, so that a missing entry is easy to spot
 install(FILES api.h
+    clipping_detector_c.h
     correlate_sync_word_bb.h
     data_whitening_bb.h
     gated_power_squelch_relative_cc.h

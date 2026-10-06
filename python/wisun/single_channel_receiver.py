@@ -61,6 +61,10 @@ class single_channel_receiver(gr.hier_block2):
                 CHANNEL_FILTER_TRANSITION * channel_spacing,
                 window.WIN_HAMMING,
                 6.76))
+        # clipping has to be seen here, on the input: a channel filtered out of a clipped
+        # signal has no sample anywhere near full scale, while the splatter it carries can
+        # still be decoded as a frame that was never sent on that channel
+        self.clipping_detector = wisun.clipping_detector_c()
         baseband_channel_receiver = wisun.baseband_channel_receiver(samples_per_symbol,
                                                                     fec=fec,
                                                                     gated_power_squelch=gated_power_squelch,
@@ -69,6 +73,7 @@ class single_channel_receiver(gr.hier_block2):
         ##################################################
         # Connections
         ##################################################
+        self.connect((self, 0), (self.clipping_detector, 0))
         if frequency_offset != 0:
             self.connect((self, 0), (multiply, 0))
             self.connect((sig_source, 0), (multiply, 1))
