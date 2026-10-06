@@ -100,6 +100,11 @@ class multi_channel_receiver(gr.hier_block2):
             oversample_rate=oversampling,
             atten=100
         )
+        # clipping has to be seen before the channelizer: once a channel is filtered out of
+        # a clipped signal its own samples are nowhere near full scale, while the splatter
+        # the clipping produced can still be decoded on channels nothing was sent on
+        self.clipping_detector = wisun.clipping_detector_c()
+        self.connect((self, 0), (self.clipping_detector, 0))
         self.connect((self, 0), (pfb_channelizer, 0))
         self.message_port_register_hier_out('pdus')
 

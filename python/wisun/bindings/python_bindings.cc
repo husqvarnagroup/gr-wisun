@@ -21,6 +21,7 @@ namespace py = pybind11;
 // Please do not delete
 /**************************************/
 // BINDING_FUNCTION_PROTOTYPES(
+    void bind_clipping_detector_c(py::module& m);
     void bind_correlate_sync_word_bb(py::module& m);
     void bind_packet_data_gate_bb(py::module& m);
     void bind_data_whitening_bb(py::module& m);
@@ -60,6 +61,7 @@ PYBIND11_MODULE(wisun_python, m)
     // Please do not delete
     /**************************************/
     // BINDING_FUNCTION_CALLS(
+    bind_clipping_detector_c(m);
     bind_correlate_sync_word_bb(m);
     bind_packet_data_gate_bb(m);
     bind_data_whitening_bb(m);

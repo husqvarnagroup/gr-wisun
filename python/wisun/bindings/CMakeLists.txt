@@ -26,6 +26,7 @@ include(GrPybind)
 
 # keep this list sorted, so that a missing entry is easy to spot
 list(APPEND wisun_python_files
+    clipping_detector_c_python.cc
     correlate_sync_word_bb_python.cc
     data_whitening_bb_python.cc
     gated_power_squelch_relative_cc_python.cc
