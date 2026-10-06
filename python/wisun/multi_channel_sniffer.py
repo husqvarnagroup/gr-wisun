@@ -16,6 +16,7 @@ from collections import OrderedDict
 import osmosdr
 from gnuradio import blocks, gr, pdu, wisun
 
+from .multi_channel_receiver import DEFAULT_OVERSAMPLING
 from .parameters import SUN_FSK_CHANNEL_PAGE, WISUN_FREQUENCY_BAND_802154_MAPPING
 from .util import tabular_pretty_print
 
@@ -30,7 +31,8 @@ class MultiChannelSniffer(gr.top_block):
     an attribute rather than a local: it feeds the plots and the gain slider as well.
     """
 
-    def __init__(self, device_string, gain, dest_file, wisun_config, **top_block_kwargs):
+    def __init__(self, device_string, gain, dest_file, wisun_config,
+                 oversampling=DEFAULT_OVERSAMPLING, **top_block_kwargs):
         """Build the flow graph for the given configuration."""
         gr.top_block.__init__(self, **top_block_kwargs)
         radio_config = wisun_config.radio_configuration()
@@ -111,7 +113,8 @@ class MultiChannelSniffer(gr.top_block):
                                                               radio_config.channels,
                                                               fec=wisun_config.uses_fec(),
                                                               metadata=metadata,
-                                                              channels_outside_mask=outside_mask)
+                                                              channels_outside_mask=outside_mask,
+                                                              oversampling=oversampling)
 
         pdu_to_tagged_stream = pdu.pdu_to_tagged_stream(gr.types.byte_t, 'packet_len')
         file_sink = blocks.file_sink(gr.sizeof_char*1, dest_file, False)

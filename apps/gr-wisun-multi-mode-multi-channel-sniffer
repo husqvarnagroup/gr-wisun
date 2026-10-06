@@ -15,6 +15,7 @@ from gnuradio import blocks, gr, pdu, wisun
 from gnuradio.wisun.cli import (
     add_channel_mask_argument,
     add_list_arguments,
+    add_oversampling_argument,
     add_receiver_arguments,
     build_configuration,
     ensure_fifo,
@@ -31,7 +32,8 @@ from gnuradio.wisun.util import tabular_pretty_print
 class GrWisunMultiModeMultiChannelSniffer(gr.top_block):
     """Multi-mode multi-channel sniffer main class."""
 
-    def __init__(self, device_string, gain, sample_rate, center_frequency, dest_file, wisun_configs):
+    def __init__(self, device_string, gain, sample_rate, center_frequency, dest_file, wisun_configs,
+                 oversampling):
         """Build one multi-channel receiver per Wi-SUN mode."""
         gr.top_block.__init__(self)
 
@@ -77,7 +79,8 @@ class GrWisunMultiModeMultiChannelSniffer(gr.top_block):
                                                                   fec=wisun_config.uses_fec(),
                                                                   metadata=metadata,
                                                                   channels_outside_mask=
-                                                                  wisun_config.channels_outside_mask())
+                                                                  wisun_config.channels_outside_mask(),
+                                                                  oversampling=oversampling)
             receivers.append(multi_channel_receiver)
 
         ##################################################
@@ -119,6 +122,7 @@ def main():
                             formatter_class=ArgumentDefaultsHelpFormatter)
     add_receiver_arguments(parser)
     add_channel_mask_argument(parser)
+    add_oversampling_argument(parser)
     parser.add_argument('-s', '--sample-rate', type=float, default=8e6, help="SDR hardware sample rate [Hz]")
     parser.add_argument('-f', '--frequency', type=float, default=866.1e6, help="SDR hardware center frequency [Hz]")
     parser.add_argument('-r', '--regulatory-domain', type=str, default="EU", help="Wi-SUN regulatory domain")
@@ -152,7 +156,8 @@ def main():
                                                  args.sample_rate,
                                                  args.frequency,
                                                  args.dest_file,
-                                                 configs)
+                                                 configs,
+                                                 args.oversampling)
 
     # the flow graph can only be dumped once it is running, so it happens from the callback
     after_start = (None if args.flow_graph_file is None

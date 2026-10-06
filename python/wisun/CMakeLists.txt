@@ -59,3 +59,4 @@ GR_ADD_TEST(qa_pdu_fcs_check ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa
 GR_ADD_TEST(qa_uncoded_receive ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_uncoded_receive.py)
 GR_ADD_TEST(qa_grc_wrappers ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_grc_wrappers.py)
 GR_ADD_TEST(qa_baseband_acquisition ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_baseband_acquisition.py)
+GR_ADD_TEST(qa_multi_channel_receiver ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/qa_multi_channel_receiver.py)

@@ -16,6 +16,7 @@ from gnuradio.wisun.cli import (
     add_channel_mask_argument,
     add_list_arguments,
     add_mode_arguments,
+    add_oversampling_argument,
     add_receiver_arguments,
     build_configuration,
     ensure_fifo,
@@ -33,9 +34,10 @@ class GuiMultiChannelSniffer(MultiChannelSniffer, Qt.QWidget):
     The signal processing is exactly MultiChannelSniffer's; everything here is the GUI.
     """
 
-    def __init__(self, device_string, gain, dest_file, wisun_config, update_rate):
+    def __init__(self, device_string, gain, dest_file, wisun_config, update_rate, oversampling):
         """Build the flow graph and the GUI for the given configuration."""
         MultiChannelSniffer.__init__(self, device_string, gain, dest_file, wisun_config,
+                                     oversampling=oversampling,
                                      name="Multi-Channel Wi-SUN FSK Sniffer", catch_exceptions=True)
 
         Qt.QWidget.__init__(self)
@@ -126,6 +128,7 @@ def main():
     add_receiver_arguments(parser)
     add_mode_arguments(parser)
     add_channel_mask_argument(parser)
+    add_oversampling_argument(parser)
     parser.add_argument('-c', '--channels', type=str, default="",
                         help="Wi-SUN channels to receive; empty: all channels")
     add_list_arguments(parser)
@@ -143,7 +146,8 @@ def main():
                                  mask_channels_only=args.mask_channels_only)
 
     qapp = Qt.QApplication(sys.argv)
-    sniffer = GuiMultiChannelSniffer(args.device, args.gain, args.dest_file, config, args.update_rate)
+    sniffer = GuiMultiChannelSniffer(args.device, args.gain, args.dest_file, config, args.update_rate,
+                                     args.oversampling)
 
     # not cli.run_until_interrupted: this one has to leave the Qt event loop rather than
     # exit, so that closeEvent runs and the window geometry is saved

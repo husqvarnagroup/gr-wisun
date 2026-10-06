@@ -26,6 +26,7 @@ from .configuration import (
     UnsupportedWiSunPhyModeIdException,
     WiSunConfiguration,
 )
+from .multi_channel_receiver import DEFAULT_OVERSAMPLING
 from .parameters import (
     WISUN_CHANNEL_PLANS,
     WISUN_COUNTRY_CODES,
@@ -64,6 +65,18 @@ def add_mode_arguments(parser):
     parser.add_argument('-p', '--channel-plan', type=int, default=32, help="Wi-SUN channel plan ID")
     parser.add_argument('-t', '--phy-type', type=int, default=0, help="Wi-SUN PHY type")
     parser.add_argument('-m', '--phy-mode', type=int, default=1, help="Wi-SUN PHY mode")
+
+
+def add_oversampling_argument(parser):
+    """Add the option choosing the channelizer's oversampling.
+
+    Only the multi-channel applications take it; it is what sets the samples per symbol the
+    channel receivers work at.
+    """
+    parser.add_argument('--oversampling', type=int, default=DEFAULT_OVERSAMPLING,
+                        help="Channelizer oversampling; multiplies the samples per symbol the "
+                             "channel receivers work at, and the CPU they need. Must divide the "
+                             "number of channelizer channels")
 
 
 def add_channel_mask_argument(parser):
