@@ -17,8 +17,23 @@
 #include <gnuradio/io_signature.h>
 #include <pmt/pmt.h>
 
+/* libpcap link-layer header types, as written into the file */
+#define WTAP_ENCAP_IEEE802_15_4_WITHFCS (195)
 #define WTAP_ENCAP_IEEE802_15_4_NOFCS (230)
 #define WTAP_ENCAP_IEEE802_15_4_TAP (283)
+
+/*
+ * pcapng enhanced packet block options: the flags option carries what the receiver knows
+ * about the frame beyond its bytes. [pcapng] 4.3.1, where bit 0 is the least significant.
+ */
+#define PCAPNG_OPTION_CODE_END_OF_OPTIONS (0)
+#define PCAPNG_OPTION_CODE_EPB_FLAGS (2)
+#define PCAPNG_EPB_FLAGS_DIRECTION_INBOUND (1u << 0)
+#define PCAPNG_EPB_FLAGS_RECEPTION_PROMISCUOUS (4u << 2)
+#define PCAPNG_EPB_FLAGS_FCS_LENGTH_SHIFT (5)
+#define PCAPNG_EPB_FLAGS_CRC_ERROR (1u << 24)
+/* the flags option itself, plus the end-of-options option that has to terminate the list */
+#define PCAPNG_EPB_OPTIONS_LENGTH (4 + 4 + 4)
 
 namespace gr {
 namespace wisun {
@@ -41,6 +56,8 @@ static const pmt::pmt_t pmt_key_channel_page = pmt::string_to_symbol("packet-cha
 static const pmt::pmt_t pmt_key_phy_band = pmt::string_to_symbol("packet-phy-band");
 static const pmt::pmt_t pmt_key_phy_type = pmt::string_to_symbol("packet-phy-type");
 static const pmt::pmt_t pmt_key_phy_mode = pmt::string_to_symbol("packet-phy-mode");
+static const pmt::pmt_t pmt_key_phr_fcs_type = pmt::string_to_symbol("wisun-packet-phr-fcs-type");
+static const pmt::pmt_t pmt_key_fcs_valid = pmt::string_to_symbol("wisun-fcs-valid");
 
 pdu_add_pcapng_header::sptr
 pdu_add_pcapng_header::make(const bool prepend_section_header_block,
@@ -127,7 +144,10 @@ void pdu_add_pcapng_header_impl::handle_msg(pmt::pmt_t msg)
 
         /* add interface description block */
         struct pcapng_interface_description_block_base idb_base;
-        uint16_t dlt = d_use_tap_dlt ? WTAP_ENCAP_IEEE802_15_4_TAP : WTAP_ENCAP_IEEE802_15_4_NOFCS;
+        /* the payload holds the frame check sequence, so the plain link type is the one
+         * that says so; the TAP link type says it in its own header instead */
+        uint16_t dlt =
+            d_use_tap_dlt ? WTAP_ENCAP_IEEE802_15_4_TAP : WTAP_ENCAP_IEEE802_15_4_WITHFCS;
 
         idb_base.block_type         = 0x00000001;
         idb_base.block_total_length = idb_length;
@@ -166,10 +186,25 @@ void pdu_add_pcapng_header_impl::handle_msg(pmt::pmt_t msg)
     padding = -payload_length % 4;
     const std::vector<uint8_t> in = pmt::u8vector_elements(msg_vect);
 
+    /*
+     * The frame check sequence is part of the payload, so its width has to be declared:
+     * the PHY header's FCS type bit, which the receiver tags, says which one it is.
+     */
+    bool fcs_type_known = pmt::dict_has_key(msg_meta, pmt_key_phr_fcs_type);
+    size_t fcs_octets = 0;
+    if (fcs_type_known) {
+        const bool fcs16 = pmt::to_long(pmt::cdr(pmt::assoc(pmt_key_phr_fcs_type, msg_meta))) != 0;
+        fcs_octets = fcs16 ? 2 : 4;
+    }
+
     /* create output PDU */
     size_t tap_header_length = 0;
     if (d_use_tap_dlt) {
         tap_header_length = 4;
+
+        if (fcs_type_known) {
+            tap_header_length += sizeof(struct ieee802_15_4_tap_dlt_header_fcs_type);
+        }
 
         /* adjust length for metadata */
         if (pmt::dict_has_key(msg_meta, pmt_key_rss)) {
@@ -185,7 +220,8 @@ void pdu_add_pcapng_header_impl::handle_msg(pmt::pmt_t msg)
             tap_header_length += sizeof(struct ieee802_15_4_tap_dlt_header_sun_phy_information);
         }
     }
-    size_t output_length = epb_header_full_length + tap_header_length + payload_length + padding;
+    size_t output_length = epb_header_full_length + tap_header_length + payload_length + padding
+                           + PCAPNG_EPB_OPTIONS_LENGTH;
     pmt::pmt_t out_vect = pmt::make_u8vector(output_length, 0);
     uint8_t* out = pmt::u8vector_writable_elements(out_vect, output_length);
 
@@ -221,6 +257,20 @@ void pdu_add_pcapng_header_impl::handle_msg(pmt::pmt_t msg)
         tap_hdr.tap_header_length = htole16(tap_header_length);
         memcpy(&out[idx], &tap_hdr, sizeof(tap_hdr));
         idx += sizeof(tap_hdr);
+
+        /* FCS type: 1 for a 2-octet CRC, 2 for a 4-octet one [TAP] 3.1 */
+        if (fcs_type_known) {
+            struct ieee802_15_4_tap_dlt_header_fcs_type fcs_hdr;
+
+            fcs_hdr.type = htole16(IEEE802_15_4_TAP_DLT_TLV_TYPE_FCS_TYPE);
+            fcs_hdr.length = htole16(1);
+            fcs_hdr.fcs_type = fcs_octets == 2 ? 1 : 2;
+            fcs_hdr.padding1 = 0;
+            fcs_hdr.padding2 = 0;
+
+            memcpy(&out[idx], &fcs_hdr, sizeof(fcs_hdr));
+            idx += sizeof(fcs_hdr);
+        }
 
         /* RSSI */
         if (pmt::dict_has_key(msg_meta, pmt_key_rss)) {
@@ -332,6 +382,27 @@ void pdu_add_pcapng_header_impl::handle_msg(pmt::pmt_t msg)
     for (size_t i = 0; i < padding; i++) {
         out[epb_base_length + tap_header_length + payload_length + i] = 0;
     }
+
+    /*
+     * add the flags option: a sniffer receives promiscuously, and a frame whose check
+     * sequence did not verify is reported as such rather than handed on as if it were
+     * good. The frame carries its own check sequence, so a reader can also see this for
+     * itself; this says what this receiver made of it.
+     */
+    uint32_t epb_flags = PCAPNG_EPB_FLAGS_DIRECTION_INBOUND |
+                         PCAPNG_EPB_FLAGS_RECEPTION_PROMISCUOUS |
+                         (uint32_t)(fcs_octets << PCAPNG_EPB_FLAGS_FCS_LENGTH_SHIFT);
+    if (pmt::dict_has_key(msg_meta, pmt_key_fcs_valid) &&
+        !pmt::to_bool(pmt::cdr(pmt::assoc(pmt_key_fcs_valid, msg_meta)))) {
+        epb_flags |= PCAPNG_EPB_FLAGS_CRC_ERROR;
+    }
+
+    size_t options_idx = epb_base_length + tap_header_length + payload_length + padding;
+    *(uint16_t*)&out[options_idx] = htole16(PCAPNG_OPTION_CODE_EPB_FLAGS);
+    *(uint16_t*)&out[options_idx + 2] = htole16(4);
+    *(uint32_t*)&out[options_idx + 4] = htole32(epb_flags);
+    *(uint16_t*)&out[options_idx + 8] = htole16(PCAPNG_OPTION_CODE_END_OF_OPTIONS);
+    *(uint16_t*)&out[options_idx + 10] = htole16(0);
 
     /* create & send msg */
     pmt::pmt_t out_msg = pmt::cons(pmt::get_PMT_NIL(), out_vect);

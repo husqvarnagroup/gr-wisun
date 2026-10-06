@@ -79,16 +79,16 @@ class qa_fec_receive(gr_unittest.TestCase):
         packets = tb.packets()
         self.assertEqual(len(packets), 1)
         self.assertEqual(packets[0][2:4], b'\x08\x8e')
-        self.assertEqual(packets[0][4:], psdu[:-4])
+        self.assertEqual(packets[0][4:], psdu)
         # a clean frame must decode with no corrections at all
         self.assertEqual(tb.metadata(0, 'wisun-fec-metric'), 0)
         self.assertTrue(tb.metadata(0, 'wisun-fcs-valid'))
 
     def test_002_packet_length_matches_the_uncoded_path(self):
-        """The decoded packet must be exactly frame_length octets long."""
+        """The decoded packet must be the SFD, the PHY header and the whole PSDU."""
         psdu = fec.append_fcs(bytes(range(138)))
         tb = self.run_chain(fec.on_air_bits(psdu))
-        self.assertEqual(len(tb.packets()[0]), len(psdu))
+        self.assertEqual(len(tb.packets()[0]), 4 + len(psdu))
 
     def test_003_several_frames_of_different_lengths(self):
         """A sequence of frames must all be received, whatever their length."""
@@ -103,8 +103,8 @@ class qa_fec_receive(gr_unittest.TestCase):
         packets = tb.packets()
         self.assertEqual(len(packets), len(psdus))
         for i, psdu in enumerate(psdus):
-            self.assertEqual(len(packets[i]), len(psdu))
-            self.assertEqual(packets[i][4:], psdu[:-4])
+            self.assertEqual(len(packets[i]), 4 + len(psdu))
+            self.assertEqual(packets[i][4:], psdu)
             self.assertEqual(tb.metadata(i, 'wisun-fec-metric'), 0)
             self.assertTrue(tb.metadata(i, 'wisun-fcs-valid'))
 
@@ -115,7 +115,7 @@ class qa_fec_receive(gr_unittest.TestCase):
 
         packets = tb.packets()
         self.assertEqual(len(packets), 1)
-        self.assertEqual(packets[0][4:], psdu[:-4])
+        self.assertEqual(packets[0][4:], psdu)
         self.assertEqual(tb.metadata(0, 'wisun-fec-metric'), 0)
 
     def test_005_corrected_single_bit_error(self):
@@ -128,7 +128,7 @@ class qa_fec_receive(gr_unittest.TestCase):
 
         packets = tb.packets()
         self.assertEqual(len(packets), 1)
-        self.assertEqual(packets[0][4:], psdu[:-4])
+        self.assertEqual(packets[0][4:], psdu)
         self.assertEqual(tb.metadata(0, 'wisun-fec-metric'), 1)
         self.assertTrue(tb.metadata(0, 'wisun-fcs-valid'))
 
@@ -147,7 +147,7 @@ class qa_fec_receive(gr_unittest.TestCase):
             bits[header_offset + i] ^= m
         tb = self.run_chain(bits)
 
-        self.assertNotIn(psdu[:-4], [packet[4:] for packet in tb.packets()])
+        self.assertNotIn(psdu, [packet[4:] for packet in tb.packets()])
 
     def test_007_uncoded_sfd_is_not_received(self):
         """Coded and uncoded networks can share a channel; this chain must ignore uncoded."""

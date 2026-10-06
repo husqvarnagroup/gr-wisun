@@ -18,7 +18,8 @@
 #include <gnuradio/pdu.h>
 #include <gnuradio/io_signature.h>
 
-#define WTAP_ENCAP_IEEE802_15_4_NOFCS (230)
+/* libpcap link-layer header type: the payload carries the frame check sequence */
+#define WTAP_ENCAP_IEEE802_15_4_WITHFCS (195)
 
 namespace gr {
 namespace wisun {
@@ -79,7 +80,7 @@ void pdu_add_pcap_header_impl::handle_msg(pmt::pmt_t msg)
         fhdr.reserved1     = 0;
         fhdr.reserved2     = 0;
         fhdr.snap_len      = 0x7ff;
-        fhdr.link_type     = WTAP_ENCAP_IEEE802_15_4_NOFCS;
+        fhdr.link_type     = WTAP_ENCAP_IEEE802_15_4_WITHFCS;
 
         memcpy(buf, &fhdr, sizeof(fhdr));
 

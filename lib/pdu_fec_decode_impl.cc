@@ -174,12 +174,15 @@ void pdu_fec_decode_impl::handle_msg(pmt::pmt_t msg)
 
     /*
      * Emit the same layout the uncoded receive path produces: start-of-frame
-     * delimiter, PHY header, then the PSDU without its frame check sequence.
+     * delimiter, PHY header, then the whole PSDU, frame check sequence included.
+     *
+     * The frame check sequence is kept rather than stripped so that a capture holds the
+     * frame as it was transmitted: a reader can then check it for itself, which is what
+     * tells a corrupted frame from a good one. `wisun-fcs-valid` carries this block's own
+     * verdict alongside it.
      */
-    const size_t fcs_len = fec::fcs_octets(fcs16);
-    const size_t payload_length = psdu.size() > fcs_len ? psdu.size() - fcs_len : 0;
     /* not const: pmt wants a modifiable reference for the length */
-    size_t output_length = sfd_octets + fec::phr_octets + payload_length;
+    size_t output_length = sfd_octets + fec::phr_octets + psdu.size();
     pmt::pmt_t out_vect = pmt::make_u8vector(output_length, 0);
     uint8_t* out = pmt::u8vector_writable_elements(out_vect, output_length);
 
@@ -188,7 +191,7 @@ void pdu_fec_decode_impl::handle_msg(pmt::pmt_t msg)
     /* the decoded header goes out most significant octet first, as it reads */
     out[2] = (uint8_t)(phr >> 8);
     out[3] = (uint8_t)(phr & 0xff);
-    memcpy(&out[sfd_octets + fec::phr_octets], psdu.data(), payload_length);
+    memcpy(&out[sfd_octets + fec::phr_octets], psdu.data(), psdu.size());
 
     pmt::pmt_t meta = pmt::dict_add(msg_meta, pmt_key_metric, pmt::from_long(metric));
     meta = pmt::dict_add(meta, pmt_key_fcs_valid, pmt::from_bool(fcs_valid));

@@ -99,17 +99,21 @@ class qa_pdu_fec_decode(gr_unittest.TestCase):
         # SFD, PHY header most significant octet first, then the PSDU without its FCS
         self.assertEqual(payload[0:2], SFD_OCTETS)
         self.assertEqual(payload[2:4], b'\x08\x8e')
-        self.assertEqual(payload[4:], psdu[:-4])
+        self.assertEqual(payload[4:], psdu)
         # a clean frame needs no corrections at all
         self.assertEqual(self.metadata_of(msgs[0], 'wisun-fec-metric'), 0)
         self.assertTrue(self.metadata_of(msgs[0], 'wisun-fcs-valid'))
 
     def test_002_pdu_length_matches_the_uncoded_path(self):
-        """The decoded PDU must be as long as the uncoded path's, i.e. the frame length."""
+        """The decoded PDU must hold the SFD, the PHY header and the whole PSDU.
+
+        The frame check sequence is part of it: a capture is meant to hold the frame as it
+        was transmitted, so a reader can check it for itself.
+        """
         for payload_length in (4, 44, 138, 165):
             psdu = fec.append_fcs(bytes(range(payload_length % 256))[:payload_length])
             msgs = self.decode([make_pdu(coded_octets_for(psdu))])
-            self.assertEqual(len(self.payload_of(msgs[0])), len(psdu))
+            self.assertEqual(len(self.payload_of(msgs[0])), 4 + len(psdu))
             self.setUp()
 
     def test_003_padding_value_does_not_matter(self):
@@ -118,12 +122,12 @@ class qa_pdu_fec_decode(gr_unittest.TestCase):
         for pad_value in (0, 1):
             msgs = self.decode([make_pdu(coded_octets_for(psdu, pad_value=pad_value))])
             self.assertEqual(len(msgs), 1)
-            self.assertEqual(self.payload_of(msgs[0])[4:], psdu[:-4])
+            self.assertEqual(self.payload_of(msgs[0])[4:], psdu)
             self.assertEqual(self.metadata_of(msgs[0], 'wisun-fec-metric'), 0)
             self.setUp()
 
     def test_004_two_octet_fcs(self):
-        """With a 2-octet FCS, 2 octets must be stripped rather than 4."""
+        """A 2-octet FCS must be read as such, and kept like the 4-octet one."""
         psdu = fec.append_fcs(b'short frame check sequence', fcs16=True)
         msgs = self.decode([make_pdu(coded_octets_for(psdu, fcs16=True))])
 
@@ -131,7 +135,7 @@ class qa_pdu_fec_decode(gr_unittest.TestCase):
         # whitened, FCS-16, and the frame length of this PSDU
         expected_phr = 0x1800 | len(psdu)
         self.assertEqual(payload[2:4], expected_phr.to_bytes(2, 'big'))
-        self.assertEqual(payload[4:], psdu[:-2])
+        self.assertEqual(payload[4:], psdu)
         self.assertTrue(self.metadata_of(msgs[0], 'wisun-fcs-valid'))
 
     def test_005_single_bit_error_sweep(self):
@@ -152,7 +156,7 @@ class qa_pdu_fec_decode(gr_unittest.TestCase):
 
         self.assertEqual(len(msgs), 8 * len(coded))
         for i, msg in enumerate(msgs):
-            self.assertEqual(self.payload_of(msg)[4:], psdu[:-4],
+            self.assertEqual(self.payload_of(msg)[4:], psdu,
                              f"bit {i} was not corrected")
             self.assertEqual(self.metadata_of(msg, 'wisun-fec-metric'), 1,
                              f"unexpected path metric for a single error in bit {i}")

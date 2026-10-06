@@ -96,7 +96,7 @@ class qa_pdu_fcs_check(gr_unittest.TestCase):
         out = self.payload_of(msgs[0])
         self.assertEqual(out[0:2], SFD_OCTETS)
         self.assertEqual(out[2:4], phr.to_bytes(2, 'big'))
-        self.assertEqual(out[4:], payload)
+        self.assertEqual(out[4:], psdu)
         self.assertTrue(self.metadata_of(msgs[0], 'wisun-fcs-valid'))
 
     def test_002_two_octet_fcs(self):
@@ -108,7 +108,7 @@ class qa_pdu_fcs_check(gr_unittest.TestCase):
 
         self.assertEqual(len(msgs), 1)
         out = self.payload_of(msgs[0])
-        self.assertEqual(out[4:], payload)
+        self.assertEqual(out[4:], psdu)
         self.assertTrue(self.metadata_of(msgs[0], 'wisun-fcs-valid'))
 
     def test_003_invalid_fcs_is_forwarded_or_dropped(self):
