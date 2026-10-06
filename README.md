@@ -213,6 +213,23 @@ Each packet received on such a channel is logged as a warning. Pass
 `--mask-channels-only` to receive only the channels the mask allows (for
 EU channel plan 33 that is 29 of 35).
 
+`--oversampling` sets how much faster than the channel spacing the
+channelizer runs its outputs, which is what fixes the samples per symbol
+the channel receivers work at. Without it that would be channel spacing
+over symbol rate, i.e. 2 for every Wi-SUN FSK mode, which costs packets.
+Measured over a wideband recording of 20 packets on EU channel plan 33,
+PHY type 1, mode 3:
+
+| `--oversampling` | samples per symbol | packets decoded | CPU, 12 cores |
+|------------------|--------------------|-----------------|---------------|
+| 1                | 2                  | 12 of 20        | 0.27× real time |
+| 2 (default)      | 4                  | 18 of 20        | 0.51× real time |
+| 4                | 8                  | 20 of 20        | 0.98× real time |
+
+The default trades two packets for the headroom to keep up with an SDR;
+raise it on a machine that can afford to. It has to divide the number of
+channelizer channels.
+
 In a separate terminal:
 
 ```bash

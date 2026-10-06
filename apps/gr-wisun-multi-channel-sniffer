@@ -11,6 +11,7 @@ from gnuradio.wisun.cli import (
     add_channel_mask_argument,
     add_list_arguments,
     add_mode_arguments,
+    add_oversampling_argument,
     add_receiver_arguments,
     build_configuration,
     ensure_fifo,
@@ -32,6 +33,7 @@ def main():
     add_receiver_arguments(parser)
     add_mode_arguments(parser)
     add_channel_mask_argument(parser)
+    add_oversampling_argument(parser)
     parser.add_argument('-c', '--channels', type=str, default="",
                         help="Wi-SUN channels to receive; empty: all channels")
     add_list_arguments(parser)
@@ -46,7 +48,8 @@ def main():
                                  allowed_channels=parse_channels(args.channels),
                                  mask_channels_only=args.mask_channels_only)
 
-    run_until_interrupted(MultiChannelSniffer(args.device, args.gain, args.dest_file, config))
+    run_until_interrupted(MultiChannelSniffer(args.device, args.gain, args.dest_file, config,
+                                             oversampling=args.oversampling))
 
 
 if __name__ == '__main__':

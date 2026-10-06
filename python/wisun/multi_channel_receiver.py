@@ -14,15 +14,32 @@ from gnuradio.fft import window
 from gnuradio.filter import firdes, pfb
 from gnuradio.wisun.util import frequency_to_wisun_channel, pfb_channel_to_frequency, tabular_pretty_print
 
-OVERSAMPLING = 1
+# Oversampling of the channelizer's outputs, as a factor on the normal output rate of
+# channel spacing. Without it the samples per symbol of every Wi-SUN FSK mode comes out as
+# channel spacing over symbol rate, which is 2 for every mode in every regulatory domain -
+# the lowest rate the chain can work at, and one the single-channel tests already document
+# as unreliable for coded frames. The discriminator is a nonlinearity and the symbol
+# synchronizer interpolates, and neither has room at 2 samples per symbol: measured over one
+# wideband recording, interpolating a channel up without adding any information recovers
+# packets that 2 samples per symbol loses, which is what identifies this rather than the
+# channelizer's filtering as the limit.
+#
+# The cost is the per-channel chains running this much faster. The channelizer itself is
+# unaffected; its taps are designed at the input rate either way.
+DEFAULT_OVERSAMPLING = 2
 
 
 class multi_channel_receiver(gr.hier_block2):
     """Block to receive Wi-SUN packets from multiple channels using polyphase channelizer."""
 
     def __init__(self, sample_rate, center_frequency, channel_0_frequency, channel_spacing, symbol_rate, channels,
-                 fec=False, metadata=None, channels_outside_mask=None):
-        """Initialize block."""
+                 fec=False, metadata=None, channels_outside_mask=None, oversampling=DEFAULT_OVERSAMPLING):
+        """Initialize block.
+
+        `oversampling` multiplies the samples per symbol the channel receivers work at; see
+        DEFAULT_OVERSAMPLING for why it is not 1. The channelizer requires it to divide the
+        number of channels.
+        """
         gr.hier_block2.__init__(self,
                                 "multi_channel_receiver",
                                 gr.io_signature(1, 1, gr.sizeof_gr_complex),  # Input signature
@@ -48,15 +65,21 @@ class multi_channel_receiver(gr.hier_block2):
         ##################################################
         n_channels = int(sample_rate / channel_spacing)
         n_active_channels = len(channels)
-        samples_per_symbol = sample_rate / n_channels / symbol_rate
+        # the channelizer accepts an oversampling of n_channels / i only
+        assert n_channels % oversampling == 0, "oversampling must divide the number of channels"
+        samples_per_symbol = oversampling * sample_rate / n_channels / symbol_rate
         assert samples_per_symbol % 1 == 0, "samples_per_symbol must be an integer"
         samples_per_symbol = int(samples_per_symbol)
+        # kept as attributes: what the channel receivers work at, which is what the
+        # oversampling is for
+        self.oversampling = oversampling
+        self.samples_per_symbol = samples_per_symbol
         filter_bandwidth = channel_spacing / 2 * 0.8
         filter_transition = channel_spacing / 2 * 0.2
         tabular_pretty_print(OrderedDict([
             ("Number of PFB channels", f"{n_channels}"),
             ("Active channels", f"{n_active_channels}"),
-            ("Oversampling", f"{OVERSAMPLING}"),
+            ("Oversampling", f"{oversampling}"),
             ("Samples per symbol", f"{samples_per_symbol}"),
             ("PFB channel filter bandwidth", f"{filter_bandwidth/1e3:.1f} kHz"),
             ("PFB channel filter transition", f"{filter_transition/1e3:.1f} kHz"),
@@ -74,7 +97,7 @@ class multi_channel_receiver(gr.hier_block2):
                 filter_transition,
                 window.WIN_HAMMING,
                 6.76),
-            oversample_rate=OVERSAMPLING,
+            oversample_rate=oversampling,
             atten=100
         )
         self.connect((self, 0), (pfb_channelizer, 0))
