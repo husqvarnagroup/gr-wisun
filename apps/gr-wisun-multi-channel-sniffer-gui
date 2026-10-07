@@ -68,7 +68,7 @@ class GuiMultiChannelSniffer(MultiChannelSniffer, Qt.QWidget):
         ##################################################
         # GUI Elements & Connections
         ##################################################
-        gain_range = qtgui.Range(0, 70, 1, 10, 200)
+        gain_range = qtgui.Range(0, 70, 1, gain, 200)
         gain_slider = qtgui.RangeWidget(gain_range, self.set_gain, "Source Gain", "counter_slider", float,
                                         QtCore.Qt.Horizontal)
         self._layout_main_area.addWidget(gain_slider)
