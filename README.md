@@ -22,14 +22,17 @@ following limitations:
 
 - only FSK modulation is supported (no OFDM)
 - only receiving is supported (packet sending not implemented)
-- a receiver handles either coded or uncoded packets, not both at
-  once: coding is signalled purely by which start-of-frame delimiter
-  the transmitter sends, and a receiver is locked to one of the two
 - performance is not optimized (in particular the clock
   synchronization could use more tuning)
+- the FIFO towards Wireshark seems to cut some packets short (needs
+  further investigation)
 
-That said, integration with Wireshark works well, and the sniffer is
-fully functional.
+That said, integration with Wireshark works, and the sniffer is fully
+functional.
+
+Performance for practical use depends a lot on having the right setup
+and using the right parameters (in particular for gain). See below
+("Tips for Practical Use").
 
 Building & Installation
 =======================
@@ -296,3 +299,52 @@ active channel. For illustration, the following picture shows the
 flow-graph generated for the two-mode example above:
 
 <img src="docs/flowgraphs/multi-mode-sniffer.svg" alt="Multi-Mode Multi-Channel Sniffer Flow-Graph" width="2000"/>
+
+Tips for Practical Use
+======================
+
+How well the sniffer works depends a lot on the setup:
+
+Console Output & Logs
+---------------------
+
+On startup, most tools print information about frequency, channel
+plan, PHY mode, modulation, etc. Be sure to sanity check whether this
+is correct for your setup.
+
+The logs also print warnings which can give helpful information, in
+particular:
+
+- duplicate packets – this often indicates there is a spurious signal
+  (which is usually a problem on RX side, such as overloading, but can
+  in some cases also be an issue on the TX side)
+- clipping – generally means the gain is too high
+
+gain & attenuation
+------------------
+
+A gain setting that is too high will lead to various artifacts in the
+signal, such as clipping (for this, a warning is printed in the logs).
+A gain setting that is too low makes the signal too weak to decode.
+
+The easiest strategy to find a good gain value is to start with the
+GUI and find the right gain with the slider.
+
+If the devices are close together (e.g. a setup on a desk with less
+than about 2 m distance), it can help to add a physical attenuator of
+e.g. 20 dB between the SDR RX port and the antenna.
+
+CPU Use
+-------
+
+In particular the multi-channel sniffer requires a lot of CPU power.
+Use a tool like `htop` to monitor whether CPU use is too high.
+
+Oversampling
+------------
+
+For the multi-channel sniffer, you can specify oversampling with
+`--oversampling` on the command line (this is used for oversampling in
+the polyphase filterbank channelizer). A higher value (e.g. 4)
+generally helps to decode a larger percentage of packets, but also
+increases CPU usage.
