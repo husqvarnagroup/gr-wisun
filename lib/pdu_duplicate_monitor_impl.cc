@@ -63,9 +63,8 @@ void pdu_duplicate_monitor_impl::handle_msg(pmt::pmt_t msg)
         /* strictly inside the window, so a window of zero never matches anything */
         if (arrived_ms - earlier.arrived_ms < d_window_ms && earlier.frame == frame) {
             d_duplicates++;
-            d_logger->warn("the frame on channel {:d} ({:d} octets) was already received "
-                           "{:d} ms ago on channel {:d}: one transmission received twice, "
-                           "which a transmitter's spurious sideband does",
+            d_logger->warn("frame on channel {:d} ({:d} octets) was already received "
+                           "{:d} ms ago on channel {:d}",
                            channel,
                            frame.size(),
                            arrived_ms - earlier.arrived_ms,
