@@ -247,6 +247,14 @@ In a separate terminal:
 wireshark -k -i /tmp/gr-wisun-sniffer
 ```
 
+It can be helpful to add columns for the channel number and the
+received signal strength (RSS):
+<img src="docs/screenshots/wireshark_multi_channel_sniffer.png" alt="Wireshark with multi-channel sniffer" width="800"/>
+
+When testing with dev-kits, optionally add different attenuators (e.g.
+10 dB, 20 dB, 30 dB) to different kits; this lets you determine the
+origin of the packet based on RSS (independently of source address).
+
 gr-wisun-multi-channel-sniffer-gui
 ----------------------------------
 
