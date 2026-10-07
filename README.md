@@ -107,7 +107,7 @@ uv run --group dev yamllint .
 ```
 
 The app scripts have to be named explicitly because they have no `.py`
-extension, which is why nothing linted them for a long time.
+extension.
 
 These are the same four checks CI runs, along with `reuse lint` for
 licensing.
@@ -216,18 +216,17 @@ Each packet received on such a channel is logged as a warning. Pass
 `--mask-channels-only` to receive only the channels the mask allows (for
 EU channel plan 33 that is 29 of 35).
 
-A frame received on two channels at once is reported as such. A
-transmitter with a spurious sideband puts a copy of its frame on another
-channel, and the receiver listening there decodes it; a corrupted copy
-fails its frame check sequence, but a bit-exact one passes every check a
-single frame can be given. Everything is still written to the capture —
-only a warning is logged. The input is watched for clipping as well, which
-is what makes such copies visible in the first place.
+A frame received on two channels at once is reported as duplicate.
+Duplicates can occur e.g. when a transmitter with a spurious sideband
+puts a copy of its frame on another channel.
 
-`--oversampling` sets how much faster than the channel spacing the
-channelizer runs its outputs, which is what fixes the samples per symbol
-the channel receivers work at. Without it that would be channel spacing
-over symbol rate, i.e. 2 for every Wi-SUN FSK mode, which costs packets.
+The input is watched for clipping as well, which is usually an
+indication the gain should be reduced.
+
+`--oversampling` sets oversampling rate for the polyphase filterbank
+channelizer. A higher values results in better packet decoding rate,
+but higher CPU use.
+
 Measured over a wideband recording of 20 packets on EU channel plan 33,
 PHY type 1, mode 3:
 
@@ -285,8 +284,8 @@ and must satisfy the following conditions for all selected modes:
 - sample rate must be an integer multiple of channel spacing
 - center frequency offset from channel 0 center frequency must be a
   multiple of the channel spacing
-- center frequency & sample rate must must be chosen so that frequency
-  band covers all channels
+- center frequency & sample rate must be chosen so that frequency band
+  covers all channels
 
 Example use to receive two Wi-SUN modes in the 868 MHz band:
 
@@ -301,7 +300,7 @@ wireshark -k -i /tmp/gr-wisun-sniffer
 ```
 
 This is currently mostly a proof-of-concept. It requires a significant
-amount of CPU power, as each mode gets its one poly-phase filter bank
+amount of CPU power, as each mode gets its one polyphase filterbank
 (channelizer) with a dedicated base-band receiver block for each
 active channel. For illustration, the following picture shows the
 flow-graph generated for the two-mode example above:
